@@ -1,136 +1,64 @@
-import React from "react"
-import { Box, ListItem, UnorderedList } from "@chakra-ui/react"
-import Link from "../components/Link"
+import type { ToCItem } from "@/lib/types"
 
-import type { Item as ItemTableOfContents } from "./TableOfContents"
+import { ItemsListProps } from "@/components/TableOfContents/ItemsList"
+import { BaseLink } from "@/components/ui/Link"
 
-const customIdRegEx = /^.+(\s*\{#([A-Za-z0-9\-_]+?)\}\s*)$/
+import { cn } from "@/lib/utils/cn"
+import { trimmedTitle } from "@/lib/utils/toc"
 
-const slugify = (s: string): string =>
-  encodeURIComponent(String(s).trim().toLowerCase().replace(/\s+/g, "-"))
-
-const getCustomId = (title: string): string => {
-  const match = customIdRegEx.exec(title)
-  if (match) {
-    return match[2].toLowerCase()
-  }
-  console.warn("Missing custom ID on header: ", title)
-  return slugify(title)
+export type TableOfContentsLinkProps = {
+  item: ToCItem
 }
 
-const trimmedTitle = (title: string): string => {
-  const match = customIdRegEx.exec(title)
-  return match ? title.replace(match[1], "").trim() : title
-}
-
-export interface Item extends ItemTableOfContents {}
-
-interface IPropsTableOfContentsLink {
-  depth: number
-  item: Item
-}
-
-const TableOfContentsLink: React.FC<IPropsTableOfContentsLink> = ({
-  depth,
-  item,
-}: {
-  depth: number
-  item: Item
-}) => {
-  const url = `#${getCustomId(item.title)}`
+const TableOfContentsLink = ({
+  item: { title, url },
+}: TableOfContentsLinkProps) => {
   let isActive = false
   if (typeof window !== `undefined`) {
     isActive = window.location.hash === url
   }
-  const isNested: boolean = depth === 2
-  let classes = ""
-  if (isActive) {
-    classes += " active"
-  }
-  if (isNested) {
-    classes += " nested"
-  }
+
   return (
-    <Link
+    <BaseLink
       href={url}
-      className={classes}
-      position="relative"
-      display="inline-block"
-      mb={2}
-      color="text300"
+      className={cn(
+        "relative !mb-4 inline-block text-xl font-normal text-gray-500 no-underline hover:text-primary hover:no-underline dark:text-gray-400",
+        isActive && "text-primary"
+      )}
     >
-      {trimmedTitle(item.title)}
-    </Link>
+      {trimmedTitle(title)}
+    </BaseLink>
   )
 }
 
-interface IPropsItemsList {
-  items: Array<Item>
-  depth: number
-  maxDepth: number
-}
-
-const ItemsList: React.FC<IPropsItemsList> = ({
-  items,
-  depth,
-  maxDepth,
-}: {
-  items: Array<Item>
-  depth: number
-  maxDepth: number
-}) => {
-  if (depth > maxDepth || !items) {
-    return null
-  }
-
+const ItemsList = ({ items, depth, maxDepth }: ItemsListProps) => {
+  // Return early if maxDepth hit, or if no items
+  if (depth > maxDepth || !items) return null
   return (
     <>
       {items.map((item, index) => (
-        <ListItem margin={0} key={index}>
-          <TableOfContentsLink depth={depth} item={item} />
-        </ListItem>
+        <li key={index} className="m-0">
+          <TableOfContentsLink item={item} />
+        </li>
       ))}
     </>
   )
 }
 
-export interface IProps {
-  items: Array<Item>
+type UpgradeTableOfContentsProps = {
+  items: ToCItem[]
   maxDepth?: number
 }
 
-const UpgradeTableOfContents: React.FC<IProps> = ({ items, maxDepth = 1 }) => {
-  if (!items) {
-    return null
-  }
-  // Exclude <h1> from TOC
-  if (items.length === 1) {
-    items = [items[0]]
-  }
-
-  return (
-    <Box
-      as="aside"
-      p={0}
-      mb={8}
-      textAlign="end"
-      overflowY="auto"
-      display={{ base: "none", l: "block" }}
-    >
-      <UnorderedList
-        m={0}
-        py={0}
-        ps={4}
-        pe={1}
-        fontSize="xl"
-        fontWeight="normal"
-        lineHeight="1.6"
-        styleType="none"
-      >
-        <ItemsList items={items} depth={0} maxDepth={maxDepth} />
-      </UnorderedList>
-    </Box>
-  )
-}
+const UpgradeTableOfContents = ({
+  items,
+  maxDepth = 1,
+}: UpgradeTableOfContentsProps) => (
+  <nav className="mb-8 hidden overflow-y-auto p-0 lg:block">
+    <ul className="m-0 py-0 leading-relaxed">
+      <ItemsList items={items} depth={0} maxDepth={maxDepth} />
+    </ul>
+  </nav>
+)
 
 export default UpgradeTableOfContents

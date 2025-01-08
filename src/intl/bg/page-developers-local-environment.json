@@ -1,8 +1,6 @@
 {
   "page-local-environment-brownie-desc": "Python-базирана мрежа за разработка и тестване на умни договори, предназначени за виртуалната машина на Етереум.",
   "page-local-environment-brownie-logo-alt": "Лого на Brownie",
-  "page-local-environment-embark-desc": "Многофункционална платформа за разработване и прилагане на децентрализирани приложения.",
-  "page-local-environment-embark-logo-alt": "Лого на Embark",
   "page-local-environment-epirus-desc": "Платформа за разработка, прилагане и наблюдение на приложенията на веригата от блокове във виртуалната машина на Java",
   "page-local-environment-epirus-logo-alt": "Лого на Epirus",
   "page-local-environment-eth-app-desc": "Създавайте приложения на базата на Етереум само с една команда. Това идва с широк набор от UI мрежи и DeFi образци, от които да избирате.",
@@ -28,8 +26,6 @@
   "page-local-environment-setup-title": "Настройте своята локална среда за развитие",
   "page-local-environment-solidity-template-desc": "GitHub шаблон за предварителна настройка за вашите умни договори в Solidity. Това включва местната мрежа Hardhat, Waffle за тестове, Ethers за изпълнение на портфейли и други.",
   "page-local-environment-solidity-template-logo-alt": "Лого на шаблона на Solidity",
-  "page-local-environment-truffle-desc": "Пакетът Truffle Suite извършва прехода за разработчиците от една идея до dapp възможно най-удобно.",
-  "page-local-environment-truffle-logo-alt": "Лого на Truffle",
   "page-local-environment-waffle-desc": "Най-напредналият lib за тестване на умни договори. Използвайте самостоятелно или със Scaffold-eth или Hardhat.",
   "page-local-environment-waffle-logo-alt": "Лого на Waffle"
 }

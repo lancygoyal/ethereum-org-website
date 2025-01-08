@@ -1,25 +1,34 @@
-import { TranslationKey } from "../../utils/translations"
+import type { FC, RefObject, SVGProps } from "react"
+import type { IconType } from "react-icons"
 
-export type SectionKey =
-  | "useEthereum"
+type LinkOnly = { href: string; items?: never }
+type ItemsOnly = { items: NavItem[]; href?: never }
+type LinkXorItems = LinkOnly | ItemsOnly
+
+export type NavItem = {
+  label: string
+  description: string
+  icon?: IconType | FC<SVGProps<SVGElement>>
+} & LinkXorItems
+
+export type NavSectionKey =
   | "learn"
-  | "developers"
-  | "enterprise"
-  | "community"
+  | "use"
+  | "build"
+  | "participate"
+  | "research"
 
-export interface IItem {
-  text: TranslationKey
-  to: string
-  items?: Array<IItem>
-  isPartiallyActive?: boolean
+export type NavSectionDetail = {
+  label: string
+  ariaLabel: string
+  items: NavItem[]
 }
 
-export interface ISection {
-  text: TranslationKey
-  ariaLabel: TranslationKey
-  items: Array<IItem>
-}
+export type NavSections = Record<NavSectionKey, NavSectionDetail>
 
-export type ISections = {
-  [key in SectionKey]: ISection
-}
+export type Level = 1 | 2 | 3 | 4
+
+export type LvlRefs = Record<
+  "lvl1" | "lvl2" | "lvl3",
+  RefObject<HTMLDivElement>
+>
