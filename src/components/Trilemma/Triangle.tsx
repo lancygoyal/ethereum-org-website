@@ -1,10 +1,11 @@
-import React, { ReactNode } from "react"
-import { useIntl } from "react-intl"
-import { chakra, HTMLChakraProps } from "@chakra-ui/react"
-import { translateMessageId } from "../../utils/translations"
+import React from "react"
+import { useTranslation } from "next-i18next"
+
+import { cn } from "@/lib/utils/cn"
+
 import { HandleClickParam } from "./useTrilemma"
 
-export interface IProps {
+export type TriangleSVGProps = {
   handleClick: (selection: HandleClickParam) => void
   isDecentralizedAndSecure: boolean
   isScalableAndSecure: boolean
@@ -15,7 +16,7 @@ export interface IProps {
   isScalable: boolean
 }
 
-export const TriangleSVG: React.FC<IProps> = ({
+export const TriangleSVG = ({
   handleClick,
   isDecentralizedAndSecure,
   isScalableAndSecure,
@@ -24,61 +25,62 @@ export const TriangleSVG: React.FC<IProps> = ({
   isDecentralized,
   isSecure,
   isScalable,
-}) => {
-  const intl = useIntl()
+}: TriangleSVGProps) => {
+  const { t } = useTranslation("page-roadmap-vision")
 
   const Path = () => (
-    <chakra.path
+    <path
       d="M111.183 479.532L566.904 181.217L598.824 787.211L111.183 479.532Z"
-      stroke="border"
-      strokeWidth="2"
+      className="stroke-border stroke-2"
     />
   )
 
-  const CircleSelect = ({ children, onClick }) => (
-    <chakra.g
-      cursor="pointer"
-      sx={{
-        "circle:first-of-type": {
-          fill: "white",
-        },
-      }}
-      onClick={onClick}
-    >
+  const CircleSelect: React.FC<React.ComponentPropsWithoutRef<"g">> = ({
+    children,
+    ...props
+  }) => (
+    <g className="cursor-pointer" {...props}>
       {children}
-    </chakra.g>
+    </g>
   )
 
-  const FillCircle = ({ isEthereum = false, isActive, ...rest }) => {
+  const FillCircle: React.FC<
+    {
+      isEthereum?: boolean
+      isActive: boolean
+    } & React.ComponentPropsWithoutRef<"circle">
+  > = ({ isEthereum = false, isActive, ...rest }) => {
     return (
-      <chakra.circle
-        fill={
-          (isActive && (isEthereum ? "primary300" : "primary")) || "background"
-        }
-        _hover={{
-          fill: isActive ? "primary" : "primary100",
-        }}
+      <circle
+        className={cn(
+          "transition-colors",
+          isActive
+            ? isEthereum
+              ? "fill-primary opacity-50"
+              : "fill-primary"
+            : "fill-background",
+          "hover:fill-primary"
+        )}
         {...rest}
       />
     )
   }
 
-  const Text = ({
-    isActive,
-    children,
-    ...rest
-  }: { isActive: boolean; children: ReactNode } & HTMLChakraProps<"text">) => (
-    <chakra.text
-      fill={isActive ? "primary400" : "text200"}
-      fontWeight={isActive ? 700 : 500}
-      opacity={isActive ? 1.0 : 0.6}
-      fontSize={{ base: "2rem", sm: "1.4rem" }}
-      textTransform="uppercase"
-      transform={{ base: "translate(-80px, 0px)", sm: "none" }}
+  const Text: React.FC<
+    { isActive: boolean } & React.ComponentPropsWithoutRef<"text">
+  > = ({ isActive, children, ...rest }) => (
+    <text
+      className={cn(
+        "uppercase",
+        isActive ? "fill-primary font-bold" : "fill-body-menu-high font-medium",
+        isActive ? "opacity-100" : "opacity-60",
+        "text-[2rem] sm:text-[1.4rem]",
+        "-translate-x-20 transform sm:translate-x-0"
+      )}
       {...rest}
     >
       {children}
-    </chakra.text>
+    </text>
   )
 
   const commonCircleStyles = {
@@ -110,15 +112,11 @@ export const TriangleSVG: React.FC<IProps> = ({
   const INNER_CIRCLE_RADIUS = "21"
 
   return (
-    <chakra.svg
+    <svg
       xmlns="http://www.w3.org/2000/svg"
-      height="620px"
+      height="620"
       viewBox="-100 100 850 915"
-      fill="background"
-      width={{ base: "full", lg: "auto" }}
-      my={{ base: -28, sm: -16, lg: 0 }}
-      mt={{ lg: 32 }}
-      mr={{ lg: 32 }}
+      className="w-full fill-background lg:mr-32 lg:mt-32 lg:w-auto"
     >
       <Path />
       <Path />
@@ -159,17 +157,17 @@ export const TriangleSVG: React.FC<IProps> = ({
         />
       </CircleSelect>
       <Text x="400" y="540" isActive={isEthereum}>
-        {translateMessageId("ethereum", intl)}
+        {t("ethereum")}
       </Text>
       <Text x="460" y="150" isActive={isDecentralized}>
-        {translateMessageId("page-upgrades-vision-trilemma-text-1", intl)}
+        {t("page-roadmap-vision-trilemma-text-1")}
       </Text>
       <Text x="-24" y="486" isActive={isSecure}>
-        {translateMessageId("page-upgrades-vision-trilemma-text-2", intl)}
+        {t("page-roadmap-vision-trilemma-text-2")}
       </Text>
       <Text x="540" y="835" isActive={isScalable}>
-        {translateMessageId("page-upgrades-vision-trilemma-text-3", intl)}
+        {t("page-roadmap-vision-trilemma-text-3")}
       </Text>
-    </chakra.svg>
+    </svg>
   )
 }

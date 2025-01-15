@@ -1,76 +1,23 @@
-import React, { ReactNode } from "react"
-import styled from "@emotion/styled"
-import { GatsbyImage, IGatsbyImageData } from "gatsby-plugin-image"
+import { StaticImageData } from "next/image"
+import type { BaseHTMLAttributes, ElementType, ReactNode } from "react"
 
-import Link from "./Link"
+import { TwImage } from "@/components/Image"
+import InlineLink from "@/components/ui/Link"
+import { LinkBox, LinkOverlay } from "@/components/ui/link-box"
 
-const Content = styled.div`
-  padding: 1.5rem;
-`
+import { cn } from "@/lib/utils/cn"
 
-const Description = styled.p`
-  opacity: 0.8;
-  margin-bottom: 0rem;
-`
-
-const ChildrenContainer = styled.div`
-  margin-top: 2rem;
-`
-
-const ImageWrapper = styled.div<{
-  isRight: boolean | undefined
-  isBottom: boolean | undefined
-}>`
-  display: flex;
-  flex-direction: row;
-  justify-content: ${(props) => (props.isRight ? `flex-end` : `center`)};
-  align-items: ${(props) => (props.isBottom ? `flex-end` : `center`)};
-  background: ${(props) => props.theme.colors.cardGradient};
-  box-shadow: inset 0px -1px 0px rgba(0, 0, 0, 0.1);
-  min-height: 260px;
-`
-
-const Title = styled.h3`
-  margin-top: 0.5rem;
-  margin-bottom: 1rem;
-`
-
-const Image = styled(GatsbyImage)`
-  width: 100%;
-  height: 100%;
-  min-width: 100px;
-  min-height: 100px;
-  max-width: 372px;
-  max-height: 257px;
-  @media (max-width: ${(props) => props.theme.breakpoints.s}) {
-    max-width: 311px;
-  }
-`
-
-const Card = styled(Link)`
-  text-decoration: none;
-  flex: 1 1 372px;
-  color: ${(props) => props.theme.colors.text};
-  box-shadow: 0px 14px 66px rgba(0, 0, 0, 0.07),
-    0px 10px 17px rgba(0, 0, 0, 0.03), 0px 4px 7px rgba(0, 0, 0, 0.05);
-  margin: 1rem;
-
-  &:hover,
-  &:focus {
-    text-decoration: none;
-    border-radius: 4px;
-    box-shadow: 0px 8px 17px rgba(0, 0, 0, 0.15);
-    background: ${(props) => props.theme.colors.tableBackgroundHover};
-    transition: transform 0.1s;
-    transform: scale(1.02);
-  }
-`
-
-export interface IProps {
-  children?: React.ReactNode
-  to: string
+import { Flex } from "./ui/flex"
+export type ActionCardProps = Omit<
+  BaseHTMLAttributes<HTMLDivElement>,
+  "title"
+> & {
+  as?: ElementType
+  children?: ReactNode
+  href: string
   alt?: string
-  image: IGatsbyImageData | string
+  image: StaticImageData
+  imageWidth?: number
   title: ReactNode
   description?: ReactNode
   className?: string
@@ -78,37 +25,57 @@ export interface IProps {
   isBottom?: boolean
 }
 
-const ActionCard: React.FC<IProps> = ({
-  to,
+const ActionCard = ({
+  href,
   alt,
   image,
+  imageWidth = 220,
   title,
   description,
   children,
   className,
   isRight,
   isBottom = true,
-}) => {
-  const isImageURL = typeof image === "string"
-
+  ...props
+}: ActionCardProps) => {
   return (
-    <Card to={to} className={className} hideArrow={true}>
-      <ImageWrapper
-        isRight={isRight}
-        isBottom={isBottom}
-        className="action-card-image-wrapper"
-      >
-        {!isImageURL && <Image image={image} alt={alt || ""} />}
-        {isImageURL && (
-          <img src={image} alt={alt} className="action-card-image" />
+    <LinkBox
+      className={cn(
+        "flex shadow-table hover:scale-[1.02] hover:rounded hover:bg-background-highlight hover:shadow-table-box-hover hover:duration-100 focus:scale-[1.02] focus:rounded focus:shadow-table-box-hover focus:duration-100",
+        className
+      )}
+      {...props}
+    >
+      <Flex
+        className={cn(
+          "flex h-[260px] flex-row bg-gradient-to-r from-accent-a/10 to-accent-c/10",
+          isBottom ? "items-end" : "items-center",
+          isRight ? "justify-end" : "justify-center"
         )}
-      </ImageWrapper>
-      <Content className="action-card-content">
-        <Title>{title}</Title>
-        <Description>{description}</Description>
-        {children && <ChildrenContainer>{children}</ChildrenContainer>}
-      </Content>
-    </Card>
+      >
+        <TwImage
+          src={image}
+          alt={alt || ""}
+          width={imageWidth}
+          className="max-h-full object-cover p-4"
+        />
+      </Flex>
+      <div className="flex flex-col justify-center p-6">
+        <h3 className="mb-4 mt-2 text-2xl font-semibold leading-snug">
+          <LinkOverlay asChild>
+            <InlineLink
+              href={href}
+              hideArrow
+              className="text-body no-underline"
+            >
+              {title}
+            </InlineLink>
+          </LinkOverlay>
+        </h3>
+        <p className={"mb-0 text-body/65"}>{description}</p>
+        {children && <div className="mt-8">{children}</div>}
+      </div>
+    </LinkBox>
   )
 }
 
