@@ -1,294 +1,264 @@
-import React, { ReactNode } from "react"
-import { useTheme } from "@emotion/react"
-import styled from "@emotion/styled"
-import { GatsbyImage } from "gatsby-plugin-image"
-import { graphql, PageProps } from "gatsby"
-import { useIntl } from "react-intl"
+import { HTMLAttributes } from "react"
+import { useRouter } from "next/router"
+import type { GetStaticProps } from "next/types"
+import { useTranslation } from "next-i18next"
+import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 
-import { translateMessageId } from "../utils/translations"
-import Translation from "../components/Translation"
-import Card from "../components/Card"
-import Leaderboard from "../components/Leaderboard"
-import BugBountyCards from "../components/BugBountyCards"
-import Link from "../components/Link"
-import Emoji from "../components/OldEmoji"
-import CardList from "../components/CardList"
-import Breadcrumbs from "../components/Breadcrumbs"
-import ButtonLink from "../components/ButtonLink"
-import PageMetadata from "../components/PageMetadata"
-import ExpandableCard from "../components/ExpandableCard"
-import {
-  CardContainer,
-  Content,
-  Divider,
-  Page,
-  GrayContainer,
-  GradientContainer,
-  SloganGradient,
-} from "../components/SharedStyledComponents"
-import FeedbackCard from "../components/FeedbackCard"
-import { Context } from "../types"
-import { getImage } from "../utils/image"
+import type { BasePageProps, ChildOnlyProp, Lang } from "@/lib/types"
 
-const HeroCard = styled.div`
-  display: flex;
-  justify-content: space-between;
-  @media (max-width: ${(props) => props.theme.breakpoints.l}) {
-    flex-direction: column;
-    padding-left: 0;
-    padding-right: 0;
-    margin-top: -2rem;
-  }
-`
+import BugBountyBanner from "@/components/Banners/BugBountyBanner"
+import Breadcrumbs from "@/components/Breadcrumbs"
+import BugBountyCards from "@/components/BugBountyCards"
+import Card from "@/components/Card"
+import CardList from "@/components/CardList"
+import Emoji from "@/components/Emoji"
+import ExpandableCard from "@/components/ExpandableCard"
+import FeedbackCard from "@/components/FeedbackCard"
+import { type ImageProps, TwImage } from "@/components/Image"
+import Leaderboard from "@/components/Leaderboard"
+import MainArticle from "@/components/MainArticle"
+import PageMetadata from "@/components/PageMetadata"
+import Translation from "@/components/Translation"
+import { ButtonLink } from "@/components/ui/buttons/Button"
+import { Divider } from "@/components/ui/divider"
+import { Center, Flex, VStack } from "@/components/ui/flex"
+import InlineLink from "@/components/ui/Link"
+import { ListItem, UnorderedList } from "@/components/ui/list"
 
-const HeroContainer = styled.div`
-  flex: 1 1 50%;
-  padding-left: 2rem;
-  padding-right: 2rem;
-  padding-top: 8rem;
-  padding-bottom: 8rem;
-  @media (max-width: ${(props) => props.theme.breakpoints.l}) {
-    padding-top: 6rem;
-    padding-bottom: 4rem;
-    padding-left: 0;
-    padding-right: 0;
-  }
-`
+import { cn } from "@/lib/utils/cn"
+import { existsNamespace } from "@/lib/utils/existsNamespace"
+import { getLastDeployDate } from "@/lib/utils/getLastDeployDate"
+import { getLocaleTimestamp } from "@/lib/utils/time"
+import { getRequiredNamespacesForPage } from "@/lib/utils/translations"
 
-const LeaderboardContainer = styled.div`
-  flex: 1 1 50%;
-  padding-left: 0rem;
-  padding-right: 2rem;
-  padding-top: 6rem;
-  padding-bottom: 8rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  @media (max-width: ${(props) => props.theme.breakpoints.l}) {
-    padding: 0;
-  }
-`
+import consensusData from "@/data/consensus-bounty-hunters.json"
+import executionData from "@/data/execution-bounty-hunters.json"
 
-const Title = styled.p`
-  text-transform: uppercase;
-  font-size: 0.875rem;
-  color: ${(props) => props.theme.colors.text};
-  margin-bottom: 0rem;
-  margin-left: 0.5rem;
-`
+import useColorModeValue from "@/hooks/useColorModeValue"
+import besu from "@/public/images/upgrades/besu.png"
+import erigon from "@/public/images/upgrades/erigon.png"
+import geth from "@/public/images/upgrades/geth.png"
+import lighthouseDark from "@/public/images/upgrades/lighthouse-dark.png"
+import lighthouseLight from "@/public/images/upgrades/lighthouse-light.png"
+import lodestar from "@/public/images/upgrades/lodestar.png"
+import nethermind from "@/public/images/upgrades/nethermind.png"
+import nimbus from "@/public/images/upgrades/nimbus-cloud.png"
+import prysm from "@/public/images/upgrades/prysm.png"
+import reth from "@/public/images/upgrades/reth.png"
+import solidity from "@/public/images/upgrades/solidity.png"
+import tekuDark from "@/public/images/upgrades/teku-dark.png"
+import tekuLight from "@/public/images/upgrades/teku-light.png"
+import vyper from "@/public/images/upgrades/vyper.png"
 
-const Subtitle = styled.div`
-  font-size: 1.5rem;
-  line-height: 140%;
-  color: ${(props) => props.theme.colors.text200};
-  max-width: 480px;
-  margin-top: 1rem;
-`
+const Page = (props: ChildOnlyProp) => (
+  <MainArticle
+    className="mx-auto my-0 flex w-full flex-col items-center"
+    {...props}
+  />
+)
 
-const Row = styled.div`
-  display: flex;
-  align-items: center;
-  @media (max-width: ${(props) => props.theme.breakpoints.l}) {
-    flex-wrap: wrap;
-  }
-`
+const Content = (props: ChildOnlyProp) => (
+  <div className="w-full px-8 py-4" {...props} />
+)
 
-const ClientRow = styled.div`
-  display: flex;
-  align-items: center;
-  @media (max-width: ${(props) => props.theme.breakpoints.l}) {
-    flex-direction: column;
-  }
-`
+const Title = (props: ChildOnlyProp) => (
+  <Text className="mb-0 ms-2 text-sm uppercase text-body" {...props} />
+)
 
-const ButtonRow = styled.div`
-  display: flex;
-  align-items: center;
-  margin-top: 1rem;
-  flex-wrap: wrap;
-`
+const H2 = (props: HTMLAttributes<HTMLHeadingElement>) => (
+  <h2 className="mb-8 mt-12 text-center tracking-normal" {...props} />
+)
 
-const StyledButton = styled(ButtonLink)`
-  margin-right: 1rem;
-  @media (max-width: ${(props) => props.theme.breakpoints.l}) {
-    margin-bottom: 1rem;
-  }
-`
+const H4 = (props: ChildOnlyProp) => (
+  <h4 className="my-8 leading-xs" {...props} />
+)
 
-const StyledCardContainer = styled(CardContainer)`
-  margin-top: 2rem;
-  margin-bottom: 3rem;
-`
+const Subtitle = (props: ChildOnlyProp) => (
+  <Text className="mt-4 max-w-[480px] leading-xs text-body-medium" {...props} />
+)
 
-const H2 = styled.h2`
-  font-size: 1.5rem;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 22px;
-  letter-spacing: 0px;
-  text-align: left;
-`
+const Text = ({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) => (
+  <p className={cn("mb-6", className)} {...props} />
+)
 
-const CenterH2 = styled(H2)`
-  text-align: center;
-`
+const SloganGradient = ({ children }: ChildOnlyProp) => (
+  <div
+    className="mt-4 max-w-[720px] overflow-auto bg-linear-bug-bounty-title bg-clip-text"
+    style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+  >
+    <h1 className="mb-6 text-4xl font-bold lg:text-5xl">{children}</h1>
+  </div>
+)
 
-const StyledCard = styled(Card)`
-  flex: 1 1 464px;
-  margin: 1rem;
-  padding: 1.5rem;
-  justify-content: flex-start;
-`
+const Rules = (props: ChildOnlyProp) => (
+  <VStack className="mx-auto my-0 max-w-3xl" {...props} />
+)
 
-const On = styled.div`
-  width: 8px;
-  height: 8px;
-  background: ${(props) => props.theme.colors.success400};
-  border-radius: 64px;
-`
+const SubmitInstructions = (props: ChildOnlyProp) => (
+  <div className="me-8 max-w-[100ch] flex-1 basis-[600px]" {...props} />
+)
 
-const StyledGrayContainer = styled(GrayContainer)`
-  margin-bottom: 3rem;
-  padding-bottom: 2rem;
-`
+const GradientContainer = (props: ChildOnlyProp) => (
+  <div
+    className="mt-8 w-full border-t bg-banner-grid-gradient px-0 py-16 shadow-table-item-box"
+    {...props}
+  />
+)
 
-const FullLeaderboardContainer = styled.div`
-  margin: 2rem auto;
-  padding: 0 2rem;
-  max-width: ${(props) => props.theme.breakpoints.m};
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`
+const LeaderboardContainer = (props: ChildOnlyProp) => (
+  <VStack
+    className="flex-1 basis-1/2 p-0 lg:pb-32 lg:pl-0 lg:pr-8 lg:pt-24"
+    {...props}
+  />
+)
 
-const Client = styled(GatsbyImage)`
-  margin: 4rem;
-  margin-top: 1rem;
-  margin-bottom: 3rem;
-`
+const FullLeaderboardContainer = (props: ChildOnlyProp) => (
+  <VStack className="mx-auto my-8 max-w-3xl px-8 py-0" {...props} />
+)
 
-const ClientIntro = styled.p`
-  text-transform: uppercase;
-  font-size: 0.875rem;
-  color: ${(props) => props.theme.colors.text300};
-  font-weight: 600;
-  @media (max-width: ${(props) => props.theme.breakpoints.l}) {
-    margin-top: 3rem;
-  }
-`
+const On = () => <div className="h-2 w-2 rounded-full bg-success" />
 
-const Rules = styled.div`
-  margin: 0 auto;
-  max-width: ${(props) => props.theme.breakpoints.m};
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`
+const Contact = (props: ChildOnlyProp) => (
+  <Flex
+    className="mx-32 my-12 w-4/5 items-center justify-between rounded-sm border border-border p-6"
+    {...props}
+  />
+)
 
-const SubmitInstructions = styled.div`
-  flex: 1 1 600px;
-  margin-right: 2rem;
-  max-width: 100ch;
-  @media (max-width: ${(props) => props.theme.breakpoints.l}) {
-    margin-right: 0;
-  }
-`
+const ButtonRow = (props: ChildOnlyProp) => (
+  <Flex className="mt-4 flex-wrap items-center" {...props} />
+)
 
-const TextNoMargin = styled.p`
-  margin-bottom: 0rem;
-`
-const Contact = styled.div`
-  border-radius: 2px;
-  border: 1px solid ${(props) => props.theme.colors.border};
-  padding: 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 3rem 8rem;
-  width: 80%;
-`
+const StyledButton = ({ children, ...props }) => (
+  <ButtonLink className="mb-0 me-4" href={props.href} {...props}>
+    {children}
+  </ButtonLink>
+)
 
-const LeftColumn = styled.div`
-  width: 100%;
-`
+const ClientIntro = (props: ChildOnlyProp) => (
+  <Text className="mt-5xl uppercase lg:mt-0" {...props} />
+)
 
-const RightColumn = styled.div`
-  width: 100%;
-  margin-left: 2rem;
-  flex-direction: column;
-  @media (max-width: ${(props) => props.theme.breakpoints.l}) {
-    margin-left: 0rem;
-    flex-direction: column;
-  }
-`
+const ClientRow = (props: ChildOnlyProp) => (
+  <VStack className="lg:flex-row" {...props} />
+)
 
-const Faq = styled.div`
-  display: flex;
-  margin-top: 4rem;
-  @media (max-width: ${(props) => props.theme.breakpoints.l}) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-`
+const Client = (props: ChildOnlyProp) => (
+  <div className="m-16 mb-12 mt-4 w-[60px]" {...props} />
+)
 
-type BountyHuntersArg = {
-  score?: number | null
-}
+const HeroCard = (props: ChildOnlyProp) => (
+  <VStack
+    className="-mt-8 justify-between lg:mt-0 lg:flex-row lg:ps-0"
+    {...props}
+  />
+)
 
-function sortBountyHuntersFn(a: BountyHuntersArg, b: BountyHuntersArg) {
-  if (a.score && b.score) {
-    return b.score - a.score
-  }
+const HeroContainer = (props: ChildOnlyProp) => (
+  <div
+    className="flex-1 basis-1/2 pb-16 pl-0 pr-0 pt-24 lg:-mt-32 lg:pb-32 lg:pl-8 lg:pr-8 lg:pt-32"
+    {...props}
+  />
+)
 
-  return 0
-}
+const Row = (props: ChildOnlyProp) => (
+  <Flex className="items-center lg:flex-wrap" {...props} />
+)
 
-interface INode {
-  readonly username: string
+const StyledCardContainer = (props: ChildOnlyProp) => (
+  <Flex className="-ml-4 -mr-4 mb-12 mt-8 flex-wrap" {...props} />
+)
+
+const StyledCard = ({ children, ...props }) => (
+  <Card className="m-4 flex-[1_1_464px] justify-start p-6" {...props}>
+    {children}
+  </Card>
+)
+
+const StyledGrayContainer = ({ children, ...props }) => (
+  <div
+    className="mb-12 mt-8 w-full border-t bg-background-highlight px-0 py-16 shadow-table-item-box"
+    {...props}
+  >
+    {children}
+  </div>
+)
+
+const Faq = (props: ChildOnlyProp) => (
+  <Flex className="mt-16 flex-col lg:flex-row" {...props} />
+)
+
+const LeftColumn = (props: ChildOnlyProp) => (
+  <div className="w-full" {...props} />
+)
+
+const RightColumn = (props: ChildOnlyProp) => (
+  <Flex className="ms-0 w-full flex-col lg:ms-8" {...props} />
+)
+
+type BountyHuntersArg = { score?: number }
+
+type Node = {
   readonly name: string
+  readonly username: string
   readonly score: number
 }
 
-interface IClient {
+type Client = {
   title: string
   link: string
-  image: any
+  image: ImageProps["src"]
 }
 
-interface ISpec {
-  title: ReactNode
+type Spec = {
+  title: string
   link: string
 }
 
-const BugBountiesPage = ({
-  data,
-  location,
-}: PageProps<Queries.BugBountyPageQuery, Context>) => {
-  const intl = useIntl()
-  const theme = useTheme()
-  const isDarkTheme = theme.isDark
+type Language = {
+  title: string
+  link: string
+  image: ImageProps["src"]
+}
 
-  // TODO sort query isn't working :(
-  const consensusBountyHuntersNodes = data.consensusBountyHunters
-    .nodes as Array<INode>
-  const consensusBountyHunters = [...consensusBountyHuntersNodes].sort(
-    sortBountyHuntersFn
+const sortBountyHuntersFn = (a: BountyHuntersArg, b: BountyHuntersArg) => {
+  if (!a.score || !b.score) return 0
+  return b.score - a.score
+}
+
+export const getStaticProps = (async ({ locale }) => {
+  const requiredNamespaces = getRequiredNamespacesForPage("bug-bounty")
+
+  const contentNotTranslated = !existsNamespace(locale!, requiredNamespaces[2])
+
+  const lastDeployDate = getLastDeployDate()
+  const lastDeployLocaleTimestamp = getLocaleTimestamp(
+    locale as Lang,
+    lastDeployDate
   )
 
-  const executionBountyHuntersNodes = data.executionBountyHunters
-    .nodes as Array<INode>
-  const executionBountyHunters = [...executionBountyHuntersNodes].sort(
-    sortBountyHuntersFn
-  )
+  return {
+    props: {
+      ...(await serverSideTranslations(locale!, requiredNamespaces)),
+      contentNotTranslated,
+      lastDeployLocaleTimestamp,
+    },
+  }
+}) satisfies GetStaticProps<BasePageProps>
 
-  const bountyHuntersArrayToObject: Record<string, INode> = [
-    ...consensusBountyHunters,
-    ...executionBountyHunters,
+const BugBountiesPage = () => {
+  const { pathname } = useRouter()
+  const { t } = useTranslation("page-bug-bounty")
+
+  const consensusBountyHunters: Node[] = consensusData.sort(sortBountyHuntersFn)
+  const executionBountyHunters: Node[] = executionData.sort(sortBountyHuntersFn)
+
+  const bountyHuntersArrayToObject: Record<string, Node> = [
+    ...consensusData,
+    ...executionData,
   ].reduce((acc, next) => {
     const name = next.name
-    if (!name) {
-      return acc
-    }
+    if (!name) return acc
 
     if (acc[name]) {
       return {
@@ -311,514 +281,508 @@ const BugBountiesPage = ({
     (a, b) => b.score - a.score
   )
 
-  const clients: Array<IClient> = [
+  const clients: Client[] = [
     {
       title: "Besu",
       link: "https://besu.hyperledger.org/en/stable/",
-      image: getImage(data.besuSmall),
+      image: besu,
     },
     {
       title: "Erigon",
       link: "https://github.com/ledgerwatch/erigon",
-      image: getImage(data.erigonSmall),
+      image: erigon,
     },
     {
       title: "Geth",
       link: "https://geth.ethereum.org/",
-      image: getImage(data.gethSmall),
+      image: geth,
     },
     {
       title: "Lighthouse",
       link: "https://lighthouse-book.sigmaprime.io/",
-      image: isDarkTheme
-        ? getImage(data.lighthouseSmallDark)
-        : getImage(data.lighthouseSmallLight),
+      image: useColorModeValue(lighthouseLight, lighthouseDark),
     },
     {
       title: "Lodestar",
       link: "https://chainsafe.github.io/lodestar/",
-      image: getImage(data.lodestarSmall),
+      image: lodestar,
     },
     {
       title: "Nimbus",
       link: "https://our.status.im/tag/nimbus/",
-      image: getImage(data.nimbusSmall),
+      image: nimbus,
     },
     {
       title: "Nethermind",
       link: "https://docs.nethermind.io/nethermind/",
-      image: getImage(data.nethermindSmall),
+      image: nethermind,
     },
     {
       title: "Prysm",
       link: "https://prylabs.net/",
-      image: getImage(data.prysmSmall),
+      image: prysm,
+    },
+    {
+      title: "Reth",
+      link: "https://reth.rs/",
+      image: reth,
     },
     {
       title: "Teku",
       link: "https://pegasys.tech/teku",
-      image: isDarkTheme
-        ? getImage(data.tekuSmallLight)
-        : getImage(data.tekuSmallDark),
+      image: useColorModeValue(tekuDark, tekuLight),
     },
   ]
 
-  const tekuImage = isDarkTheme
-    ? getImage(data.tekuLight)
-    : getImage(data.tekuDark)
-
-  const lighthouseImage = isDarkTheme
-    ? getImage(data.lighthouseDark)
-    : getImage(data.lighthouseLight)
-
-  const specs: Array<ISpec> = [
+  const specs: Spec[] = [
     {
-      title: <Translation id="page-upgrades-bug-bounty-title-1" />,
+      title: t("page-upgrades-bug-bounty-title-1"),
       link: "https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/beacon-chain.md",
     },
     {
-      title: <Translation id="page-upgrades-bug-bounty-title-2" />,
+      title: t("page-upgrades-bug-bounty-title-2"),
       link: "https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/fork-choice.md",
     },
     {
-      title: <Translation id="page-upgrades-bug-bounty-title-3" />,
+      title: t("page-upgrades-bug-bounty-title-3"),
       link: "https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/deposit-contract.md",
     },
     {
-      title: <Translation id="page-upgrades-bug-bounty-title-4" />,
+      title: t("page-upgrades-bug-bounty-title-4"),
       link: "https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/p2p-interface.md",
     },
   ]
+
+  const languages: Language[] = [
+    {
+      title: "Solidity",
+      link: "https://soliditylang.org/",
+      image: solidity,
+    },
+    {
+      title: "Vyper",
+      link: "https://vyperlang.org/",
+      image: vyper,
+    },
+  ]
+
+  const iconImageProps = {
+    width: 60,
+  }
   return (
     <Page>
       <PageMetadata
-        title={translateMessageId("page-upgrades-bug-bounty-meta-title", intl)}
-        description={translateMessageId(
-          "page-upgrades-bug-bounty-meta-description",
-          intl
-        )}
+        title={t("page-upgrades-bug-bounty-meta-title")}
+        description={t("page-upgrades-bug-bounty-meta-description")}
       />
+      {/* TODO: Remove on the 25th of January */}
+      <BugBountyBanner />
       <Content>
         <HeroCard>
           <HeroContainer>
-            <Breadcrumbs slug={location.pathname} />
+            <Breadcrumbs slug={pathname} className="mb-8" />
             <Row>
               <On />
-              <Title>
-                <Translation id="page-upgrades-bug-bounty-title" />
-              </Title>
+              <Title>{t("page-upgrades-bug-bounty-title")}</Title>
             </Row>
             <SloganGradient>
-              <Translation id="page-upgrades-bug-bounty-slogan" />{" "}
-              <Emoji size={1} text=":bug:" />
+              {t("page-upgrades-bug-bounty-slogan")} <Emoji text=":bug:" />
             </SloganGradient>
-            <Subtitle>
-              <Translation id="page-upgrades-bug-bounty-subtitle" />
-            </Subtitle>
+            <Subtitle>{t("page-upgrades-bug-bounty-subtitle")}</Subtitle>
             <ButtonRow>
-              <StyledButton to="https://forms.gle/Gnh4gzGh66Yc3V7G8">
-                <Translation id="page-upgrades-bug-bounty-submit" />
+              <StyledButton href="https://forms.gle/Gnh4gzGh66Yc3V7G8">
+                {t("page-upgrades-bug-bounty-submit")}
               </StyledButton>
-              <StyledButton variant="outline" to="#rules">
-                <Translation id="page-upgrades-bug-bounty-rules" />
+              <StyledButton variant="outline" href="#rules" isSecondary>
+                {t("page-upgrades-bug-bounty-rules")}
               </StyledButton>
             </ButtonRow>
           </HeroContainer>
           <LeaderboardContainer>
-            <Leaderboard content={allBounterHunters} limit={5} />
-            <ButtonLink variant="outline" to="#leaderboard">
-              <Translation id="page-upgrades-bug-bounty-leaderboard" />
+            <Leaderboard content={allBounterHunters.slice(0, 5)} />
+            <ButtonLink variant="outline" href="#leaderboard">
+              {t("page-upgrades-bug-bounty-leaderboard")}
             </ButtonLink>
           </LeaderboardContainer>
         </HeroCard>
       </Content>
-      <ClientIntro>
-        <Translation id="page-upgrades-bug-bounty-clients" />
-      </ClientIntro>
+      <ClientIntro>{t("page-upgrades-bug-bounty-clients")}</ClientIntro>
       <ClientRow>
-        <Client image={getImage(data.besu)!} alt="" />
-        <Client image={getImage(data.erigon)!} alt="" />
-        <Client image={getImage(data.geth)!} alt="" />
-        <Client image={getImage(data.nethermind)!} alt="" />
+        <Client>
+          <TwImage src={besu} alt="" {...iconImageProps} />
+        </Client>
+        <Client>
+          <TwImage src={erigon} alt="" {...iconImageProps} />
+        </Client>
+        <Client>
+          <TwImage src={geth} alt="" {...iconImageProps} />
+        </Client>
+        <Client>
+          <TwImage src={nethermind} alt="" {...iconImageProps} />
+        </Client>
+        <Client>
+          <TwImage src={reth} alt="" {...iconImageProps} />
+        </Client>
       </ClientRow>
       <ClientRow>
-        <Client image={lighthouseImage!} alt="" />
-        <Client image={getImage(data.lodestar)!} alt="" />
-        <Client image={getImage(data.nimbus)!} alt="" />
-        <Client image={getImage(data.prysm)!} alt="" />
-        <Client image={tekuImage!} alt="" />
+        <Client>
+          <TwImage
+            src={useColorModeValue(lighthouseLight, lighthouseDark)}
+            alt=""
+            {...iconImageProps}
+          />
+        </Client>
+        <Client>
+          <TwImage src={lodestar} alt="" {...iconImageProps} />
+        </Client>
+        <Client>
+          <TwImage src={nimbus} alt="" {...iconImageProps} />
+        </Client>
+        <Client>
+          <TwImage src={prysm} alt="" {...iconImageProps} />
+        </Client>
+        <Client>
+          <TwImage
+            src={useColorModeValue(tekuDark, tekuLight)}
+            alt=""
+            {...iconImageProps}
+          />
+        </Client>
       </ClientRow>
       <StyledGrayContainer id="rules">
         <Content>
-          <H2>
-            <Translation id="page-upgrades-bug-bounty-validity" />
+          <H2 className="mb-4 text-left">
+            {t("page-upgrades-bug-bounty-validity")}
           </H2>
-          <p>
-            <Translation id="page-upgrades-bug-bounty-validity-desc" />
-          </p>
+          <Text>
+            <Translation id="page-bug-bounty:page-upgrades-bug-bounty-validity-desc" />
+          </Text>
           <StyledCardContainer>
             <StyledCard
               emoji=":ledger:"
-              title={translateMessageId(
-                "page-upgrades-bug-bounty-ledger-title",
-                intl
-              )}
-              description={translateMessageId(
-                "page-upgrades-bug-bounty-ledger-desc",
-                intl
-              )}
+              title={t("page-upgrades-bug-bounty-ledger-title")}
+              description={t("page-upgrades-bug-bounty-ledger-desc")}
             >
-              <Link to="https://github.com/ethereum/consensus-specs">
-                <Translation id="page-upgrades-bug-bounty-specs" />
-              </Link>
+              <InlineLink href="https://github.com/ethereum/consensus-specs">
+                {t("page-upgrades-bug-bounty-specs")}
+              </InlineLink>
               <br />
-              <Link to="https://github.com/ethereum/execution-specs">
-                <Translation id="page-upgrades-bug-bounty-execution-specs" />
-              </Link>
+              <InlineLink href="https://github.com/ethereum/execution-specs">
+                {t("page-upgrades-bug-bounty-execution-specs")}
+              </InlineLink>
               <br />
               <div>
-                <p>
-                  <Translation id="page-upgrades-bug-bounty-annotations" />
-                </p>
-                <ul>
-                  <li>
-                    <Link to="https://benjaminion.xyz/eth2-annotated-spec/">
-                      Ben Edgington's{" "}
-                      <Translation id="page-upgrades-bug-bounty-annotated-specs" />
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="https://github.com/ethereum/annotated-spec">
-                      Vitalik Buterin's{" "}
-                      <Translation id="page-upgrades-bug-bounty-annotated-specs" />
-                    </Link>
-                  </li>
-                </ul>
+                <Text>{t("page-upgrades-bug-bounty-annotations")}</Text>
+                <UnorderedList>
+                  <ListItem>
+                    <InlineLink href="https://benjaminion.xyz/eth2-annotated-spec/">
+                      Ben Edgington&apos;s{" "}
+                      {t("page-upgrades-bug-bounty-annotated-specs")}
+                    </InlineLink>
+                  </ListItem>
+                  <ListItem>
+                    <InlineLink href="https://github.com/ethereum/annotated-spec">
+                      Vitalik Buterin&apos;s{" "}
+                      {t("page-upgrades-bug-bounty-annotated-specs")}
+                    </InlineLink>
+                  </ListItem>
+                </UnorderedList>
               </div>
               <div>
-                <h4>
-                  <Translation id="page-upgrades-bug-bounty-types" />
-                </h4>
-                <ul>
-                  <li>
-                    <Translation id="page-upgrades-bug-bounty-type-1" />
-                  </li>
-                  <li>
-                    <Translation id="page-upgrades-bug-bounty-type-2" />
-                  </li>
-                  <li>
-                    <Translation id="page-upgrades-bug-bounty-type-3" />
-                  </li>
-                  <li>
-                    <Translation id="page-upgrades-bug-bounty-type-4" />
-                  </li>
-                </ul>
+                <H4>{t("page-upgrades-bug-bounty-types")}</H4>
+                <UnorderedList>
+                  <ListItem>{t("page-upgrades-bug-bounty-type-1")}</ListItem>
+                  <ListItem>{t("page-upgrades-bug-bounty-type-2")}</ListItem>
+                  <ListItem>{t("page-upgrades-bug-bounty-type-3")}</ListItem>
+                  <ListItem>{t("page-upgrades-bug-bounty-type-4")}</ListItem>
+                </UnorderedList>
               </div>
               <div>
-                <h4>
-                  <Translation id="page-upgrades-bug-bounty-specs-docs" />
-                </h4>
-                <CardList content={specs} />
+                <H4>{t("page-upgrades-bug-bounty-specs-docs")}</H4>
+                <CardList items={specs} />
               </div>
             </StyledCard>
             <StyledCard
               emoji=":computer:"
-              title={translateMessageId(
-                "page-upgrades-bug-bounty-client-bugs",
-                intl
-              )}
-              description={translateMessageId(
-                "page-upgrades-bug-bounty-client-bugs-desc",
-                intl
-              )}
+              title={t("page-upgrades-bug-bounty-client-bugs")}
+              description={t("page-upgrades-bug-bounty-client-bugs-desc")}
             >
               <div>
-                <p>
-                  <Translation id="page-upgrades-bug-bounty-client-bugs-desc-2" />
-                </p>
-                <h4>
-                  <Translation id="page-upgrades-bug-bounty-types" />
-                </h4>
-                <ul>
-                  <li>
-                    <Translation id="page-upgrades-bug-bounty-clients-type-1" />
-                  </li>
-                  <li>
-                    <Translation id="page-upgrades-bug-bounty-clients-type-2" />
-                  </li>
-                  <li>
-                    {" "}
-                    <Translation id="page-upgrades-bug-bounty-clients-type-3" />
-                  </li>
-                </ul>
+                <Text>
+                  <Translation id="page-bug-bounty:page-upgrades-bug-bounty-client-bugs-desc-2" />
+                </Text>
+                <H4>{t("page-upgrades-bug-bounty-types")}</H4>
+                <UnorderedList>
+                  <ListItem>
+                    {t("page-upgrades-bug-bounty-clients-type-1")}
+                  </ListItem>
+                  <ListItem>
+                    {t("page-upgrades-bug-bounty-clients-type-2")}
+                  </ListItem>
+                  <ListItem>
+                    {t("page-upgrades-bug-bounty-clients-type-3")}
+                  </ListItem>
+                </UnorderedList>
               </div>
               <div>
-                <h4>
-                  <Translation id="page-upgrades-bug-bounty-help-links" />
-                </h4>
-                <CardList content={clients} />
+                <H4>{t("page-upgrades-bug-bounty-help-links")}</H4>
+                <CardList items={clients} />
               </div>
             </StyledCard>
             <StyledCard
               emoji=":book:"
-              title={translateMessageId(
-                "page-upgrades-bug-bounty-misc-bugs",
-                intl
-              )}
-              description={translateMessageId(
-                "page-upgrades-bug-bounty-misc-bugs-desc",
-                intl
-              )}
+              title={t("page-upgrades-bug-bounty-misc-bugs")}
+              description={t("page-upgrades-bug-bounty-misc-bugs-desc")}
             >
               <div>
-                <p>
-                  <Translation id="page-upgrades-bug-bounty-misc-bugs-desc-2" />
-                </p>
+                <Text>{t("page-upgrades-bug-bounty-misc-bugs-desc-2")}</Text>
               </div>
               <div>
-                <h4>
-                  <Translation id="page-upgrades-bug-bounty-help-links" />
-                </h4>
-                <Link to="https://github.com/ethereum/solidity/blob/develop/SECURITY.md">
-                  SECURITY.md
-                </Link>
+                <H4>{t("page-upgrades-bug-bounty-help-links")}</H4>
+                <CardList items={languages} />
               </div>
             </StyledCard>
             <StyledCard
               emoji=":scroll:"
-              title={translateMessageId(
-                "page-upgrades-bug-bounty-deposit-bugs",
-                intl
-              )}
-              description={translateMessageId(
-                "page-upgrades-bug-bounty-deposit-bugs-desc",
-                intl
-              )}
+              title={t("page-upgrades-bug-bounty-deposit-bugs")}
+              description={t("page-upgrades-bug-bounty-deposit-bugs-desc")}
             >
               <div>
-                <h4>
-                  <Translation id="page-upgrades-bug-bounty-help-links" />
-                </h4>
-                <Link to="https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/deposit-contract.md">
+                <H4>{t("page-upgrades-bug-bounty-help-links")}</H4>
+                <InlineLink href="https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/deposit-contract.md">
                   Deposit Contract Specifications
-                </Link>
+                </InlineLink>
                 <br />
-                <Link to="https://github.com/ethereum/consensus-specs/blob/dev/solidity_deposit_contract/deposit_contract.sol">
+                <InlineLink href="https://github.com/ethereum/consensus-specs/blob/dev/solidity_deposit_contract/deposit_contract.sol">
                   Deposit Contract Source Code
-                </Link>
+                </InlineLink>
+              </div>
+            </StyledCard>
+            <StyledCard
+              emoji=":bug:"
+              title={t("page-upgrades-bug-bounty-dependency-bugs")}
+              description={t("page-upgrades-bug-bounty-dependency-bugs-desc")}
+            >
+              <div>
+                <H4>{t("page-upgrades-bug-bounty-help-links")}</H4>
+                <InlineLink href="https://github.com/ethereum/c-kzg-4844">
+                  C-KZG-4844
+                </InlineLink>
+                <br />
+                <InlineLink href="https://github.com/crate-crypto/go-kzg-4844">
+                  Go-KZG-4844
+                </InlineLink>
               </div>
             </StyledCard>
           </StyledCardContainer>
-          <H2>
-            <Translation id="page-upgrades-bug-bounty-not-included" />
-          </H2>
-          <p>
-            <Translation id="page-upgrades-bug-bounty-not-included-desc" />
-          </p>
+          <H2>{t("page-upgrades-bug-bounty-not-included")}</H2>
+          <Text>{t("page-upgrades-bug-bounty-not-included-desc")}</Text>
         </Content>
       </StyledGrayContainer>
       <Content>
         <Row>
           <SubmitInstructions>
-            <H2>
-              <Translation id="page-upgrades-bug-bounty-submit" />
-            </H2>
-            <p>
-              <Translation id="page-upgrades-bug-bounty-submit-desc" />{" "}
-              <Link to="https://www.owasp.org/index.php/OWASP_Risk_Rating_Methodology">
-                <Translation id="page-upgrades-bug-bounty-owasp" />
-              </Link>
-            </p>
-            <p>
-              <Translation id="page-upgrades-bug-bounty-points" />
-            </p>
-            <p>
-              <b>
-                <Translation id="page-upgrades-bug-bounty-quality" />
-              </b>
-              <Translation id="page-upgrades-bug-bounty-quality-desc" />
-            </p>
-            <p>
-              <b>
-                <Translation id="page-upgrades-bug-bounty-quality-repro" />
-              </b>
-              <Translation id="page-upgrades-bug-bounty-quality-repro-desc" />
-            </p>
-            <p>
-              <Translation id="page-upgrades-bug-bounty-quality-fix" />
-            </p>
+            <H2>{t("page-upgrades-bug-bounty-submit")}</H2>
+            <Text>
+              {t("page-upgrades-bug-bounty-submit-desc")}{" "}
+              <InlineLink href="https://www.owasp.org/index.php/OWASP_Risk_Rating_Methodology">
+                {t("page-upgrades-bug-bounty-owasp")}
+              </InlineLink>
+            </Text>
+            <Text>{t("page-upgrades-bug-bounty-points")}</Text>
+            <Text>
+              <b>{t("page-upgrades-bug-bounty-quality")}</b>
+              {t("page-upgrades-bug-bounty-quality-desc")}
+            </Text>
+            <Text>
+              <b>{t("page-upgrades-bug-bounty-quality-repro")}</b>
+              {t("page-upgrades-bug-bounty-quality-repro-desc")}
+            </Text>
+            <Text>
+              <Translation id="page-bug-bounty:page-upgrades-bug-bounty-quality-fix" />
+            </Text>
           </SubmitInstructions>
-          {/* TODO: Re-add Points Exchange (BugBountyPoints Component) */}
         </Row>
       </Content>
       <BugBountyCards />
       <Content>
         <Rules>
-          <H2>
-            <Translation id="page-upgrades-bug-bounty-hunting" />
-          </H2>
-          <p>
-            <em>
-              <Translation id="page-upgrades-bug-bounty-hunting-desc" />
-            </em>
-          </p>
-          <ul>
-            <li>
-              <Translation id="page-upgrades-bug-bounty-hunting-li-1" />
-            </li>
-            <li>
-              <Translation id="page-upgrades-bug-bounty-hunting-li-2" />
-            </li>
-            <li>
-              <Translation id="page-upgrades-bug-bounty-hunting-li-3" />
-            </li>
-            <li id="leaderboard">
-              <Translation id="page-upgrades-bug-bounty-hunting-li-4" />
-            </li>
-          </ul>
+          <H2>{t("page-upgrades-bug-bounty-hunting")}</H2>
+          <Text>
+            <em>{t("page-upgrades-bug-bounty-hunting-desc")}</em>
+          </Text>
+          <UnorderedList>
+            <ListItem>{t("page-upgrades-bug-bounty-hunting-li-1")}</ListItem>
+            <ListItem>{t("page-upgrades-bug-bounty-hunting-li-2")}</ListItem>
+            <ListItem>{t("page-upgrades-bug-bounty-hunting-li-3")}</ListItem>
+            <ListItem id="leaderboard">
+              {t("page-upgrades-bug-bounty-hunting-li-4")}
+            </ListItem>
+          </UnorderedList>
         </Rules>
       </Content>
       <GradientContainer>
         <FullLeaderboardContainer>
-          <H2>
-            <Translation id="page-upgrades-bug-bounty-hunting-execution-leaderboard" />
-          </H2>
-          <p>
-            <Translation id="page-upgrades-bug-bounty-hunting-execution-leaderboard-subtitle" />
-          </p>
+          <H2>{t("page-upgrades-bug-bounty-hunting-execution-leaderboard")}</H2>
+          <Text>
+            {t(
+              "page-upgrades-bug-bounty-hunting-execution-leaderboard-subtitle"
+            )}
+          </Text>
           <Leaderboard content={executionBountyHunters} />
         </FullLeaderboardContainer>
-
         <FullLeaderboardContainer>
-          <H2>
-            <Translation id="page-upgrades-bug-bounty-hunting-leaderboard" />
-          </H2>
-          <p>
-            <Translation id="page-upgrades-bug-bounty-hunting-leaderboard-subtitle" />
-          </p>
+          <H2>{t("page-upgrades-bug-bounty-hunting-leaderboard")}</H2>
+          <Text>
+            {t("page-upgrades-bug-bounty-hunting-leaderboard-subtitle")}
+          </Text>
           <Leaderboard content={consensusBountyHunters} />
         </FullLeaderboardContainer>
       </GradientContainer>
       <Divider />
       <Content>
-        <CenterH2>
-          <Translation id="page-upgrades-question-title" />
-        </CenterH2>
+        <Center>
+          <H2>{t("page-upgrades-question-title")}</H2>
+        </Center>
         <Faq>
           <LeftColumn>
             <ExpandableCard
-              title={translateMessageId("bug-bounty-faq-q1-title", intl)}
-              contentPreview={translateMessageId(
-                "bug-bounty-faq-q1-contentPreview",
-                intl
-              )}
+              title={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q1-title" />
+              }
+              contentPreview={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q1-contentPreview" />
+              }
             >
-              <p>
-                <Translation id="bug-bounty-faq-q1-content-1" />
-              </p>
-              <p>
-                <Translation id="bug-bounty-faq-q1-content-2" />
-              </p>
-              <p>
-                <Translation id="bug-bounty-faq-q1-content-3" />
-              </p>
-              <p>
-                <Translation id="bug-bounty-faq-q1-content-4" />
-              </p>
-              <p>
-                <Translation id="bug-bounty-faq-q1-content-5" />
-              </p>
-              <p>
-                <Translation id="bug-bounty-faq-q1-content-6" />
-              </p>
-              <p>
-                <Translation id="bug-bounty-faq-q1-content-7" />
-              </p>
+              <Text>
+                <Translation id="page-bug-bounty:bug-bounty-faq-q1-content-1" />
+              </Text>
+              <Text>
+                <Translation id="page-bug-bounty:bug-bounty-faq-q1-content-2" />
+              </Text>
+              <Text>
+                <Translation id="page-bug-bounty:bug-bounty-faq-q1-content-3" />
+              </Text>
+              <Text>
+                <Translation id="page-bug-bounty:bug-bounty-faq-q1-content-4" />
+              </Text>
+              <Text>
+                <Translation id="page-bug-bounty:bug-bounty-faq-q1-content-5" />
+              </Text>
+              <Text>
+                <Translation id="page-bug-bounty:bug-bounty-faq-q1-content-6" />
+              </Text>
+              <Text>
+                <Translation id="page-bug-bounty:bug-bounty-faq-q1-content-7" />
+              </Text>
             </ExpandableCard>
             <ExpandableCard
-              title={translateMessageId("bug-bounty-faq-q2-title", intl)}
-              contentPreview={translateMessageId(
-                "bug-bounty-faq-q2-contentPreview",
-                intl
-              )}
+              title={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q2-title" />
+              }
+              contentPreview={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q2-contentPreview" />
+              }
             >
-              <p>
-                <Translation id="bug-bounty-faq-q2-content-1" />
-              </p>
+              <Text>
+                {
+                  <Translation id="page-bug-bounty:bug-bounty-faq-q2-content-1" />
+                }
+              </Text>
             </ExpandableCard>
             <ExpandableCard
-              title={translateMessageId("bug-bounty-faq-q3-title", intl)}
-              contentPreview={translateMessageId(
-                "bug-bounty-faq-q3-contentPreview",
-                intl
-              )}
+              title={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q3-title" />
+              }
+              contentPreview={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q3-contentPreview" />
+              }
             >
-              <p>
-                <Translation id="bug-bounty-faq-q3-content-1" />
-              </p>
+              <Text>
+                {
+                  <Translation id="page-bug-bounty:bug-bounty-faq-q3-content-1" />
+                }
+              </Text>
             </ExpandableCard>
             <ExpandableCard
-              title={translateMessageId("bug-bounty-faq-q4-title", intl)}
-              contentPreview={translateMessageId(
-                "bug-bounty-faq-q4-contentPreview",
-                intl
-              )}
+              title={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q4-title" />
+              }
+              contentPreview={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q4-contentPreview" />
+              }
             >
-              <p>
-                <Translation id="bug-bounty-faq-q4-content-1" />
-              </p>
+              <Text>
+                {
+                  <Translation id="page-bug-bounty:bug-bounty-faq-q4-content-1" />
+                }
+              </Text>
             </ExpandableCard>
           </LeftColumn>
           <RightColumn>
             <ExpandableCard
-              title={translateMessageId("bug-bounty-faq-q5-title", intl)}
-              contentPreview={translateMessageId(
-                "bug-bounty-faq-q5-contentPreview",
-                intl
-              )}
+              title={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q5-title" />
+              }
+              contentPreview={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q5-contentPreview" />
+              }
             >
-              <p>
-                <Translation id="bug-bounty-faq-q5-content-1" />
-              </p>
+              <Text>
+                {
+                  <Translation id="page-bug-bounty:bug-bounty-faq-q5-content-1" />
+                }
+              </Text>
             </ExpandableCard>
             <ExpandableCard
-              title={translateMessageId("bug-bounty-faq-q6-title", intl)}
-              contentPreview={translateMessageId(
-                "bug-bounty-faq-q6-contentPreview",
-                intl
-              )}
+              title={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q6-title" />
+              }
+              contentPreview={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q6-contentPreview" />
+              }
             >
-              <p>
-                <Translation id="bug-bounty-faq-q6-content-1" />
-              </p>
-              <p>
-                <Translation id="bug-bounty-faq-q6-content-2" />
-              </p>
+              <Text>
+                {
+                  <Translation id="page-bug-bounty:bug-bounty-faq-q6-content-1" />
+                }
+              </Text>
+              <Text>
+                {
+                  <Translation id="page-bug-bounty:bug-bounty-faq-q6-content-2" />
+                }
+              </Text>
             </ExpandableCard>
             <ExpandableCard
-              title={translateMessageId("bug-bounty-faq-q7-title", intl)}
-              contentPreview={translateMessageId(
-                "bug-bounty-faq-q7-contentPreview",
-                intl
-              )}
+              title={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q7-title" />
+              }
+              contentPreview={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q7-contentPreview" />
+              }
             >
-              <p>
-                <Translation id="bug-bounty-faq-q7-content-1" />
-              </p>
+              <Text>
+                {
+                  <Translation id="page-bug-bounty:bug-bounty-faq-q7-content-1" />
+                }
+              </Text>
             </ExpandableCard>
             <ExpandableCard
-              title={translateMessageId("bug-bounty-faq-q8-title", intl)}
-              contentPreview={translateMessageId(
-                "bug-bounty-faq-q8-contentPreview",
-                intl
-              )}
+              title={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q8-title" />
+              }
+              contentPreview={
+                <Translation id="page-bug-bounty:bug-bounty-faq-q8-contentPreview" />
+              }
             >
-              <p>
-                <Translation id="bug-bounty-faq-q8-content-1" />
-              </p>
-              <Link to="https://ethereum.org/security_at_ethereum.org.asc">
-                <Translation id="bug-bounty-faq-q8-PGP-key" />
-              </Link>
+              <Text>
+                {
+                  <Translation id="page-bug-bounty:bug-bounty-faq-q8-content-1" />
+                }
+              </Text>
+              <InlineLink href="https://ethereum.org/security_at_ethereum.org.asc">
+                {<Translation id="page-bug-bounty:bug-bounty-faq-q8-PGP-key" />}
+              </InlineLink>
             </ExpandableCard>
           </RightColumn>
         </Faq>
@@ -826,15 +790,17 @@ const BugBountiesPage = ({
       <Divider />
       <Contact>
         <div>
-          <H2>
-            <Translation id="page-upgrades-bug-bounty-questions" />
-          </H2>
-          <TextNoMargin>
-            <Translation id="page-upgrades-bug-bounty-email-us" />{" "}
-            <Link to="mailto:bounty@ethereum.org">bounty@ethereum.org</Link>
-          </TextNoMargin>
+          <Text className="mb-4 text-xl font-bold">
+            {t("page-upgrades-bug-bounty-questions")}
+          </Text>
+          <Text className="mb-0">
+            {t("page-upgrades-bug-bounty-email-us")}{" "}
+            <InlineLink href="mailto:bounty@ethereum.org">
+              bounty@ethereum.org
+            </InlineLink>
+          </Text>
         </div>
-        <Emoji size={3} text=":email:" />
+        <Emoji className="text-5xl" text=":email:" />
       </Contact>
       <FeedbackCard />
     </Page>
@@ -842,127 +808,3 @@ const BugBountiesPage = ({
 }
 
 export default BugBountiesPage
-
-export const ClientLogos = graphql`
-  fragment ClientLogos on File {
-    childImageSharp {
-      gatsbyImageData(
-        width: 60
-        layout: FIXED
-        placeholder: BLURRED
-        quality: 100
-      )
-    }
-  }
-`
-
-export const ClientLogosSmall = graphql`
-  fragment ClientLogosSmall on File {
-    childImageSharp {
-      gatsbyImageData(
-        width: 24
-        layout: FIXED
-        placeholder: BLURRED
-        quality: 100
-      )
-    }
-  }
-`
-
-export const query = graphql`
-  query BugBountyPage {
-    consensusBountyHunters: allConsensusBountyHuntersCsv(
-      sort: { score: DESC }
-    ) {
-      nodes {
-        username
-        name
-        score
-      }
-    }
-    executionBountyHunters: allExecutionBountyHuntersCsv(
-      sort: { score: DESC }
-    ) {
-      nodes {
-        username
-        name
-        score
-      }
-    }
-    prysm: file(relativePath: { eq: "upgrades/prysm.png" }) {
-      ...ClientLogos
-    }
-    lodestar: file(relativePath: { eq: "upgrades/lodestar.png" }) {
-      ...ClientLogos
-    }
-    besu: file(relativePath: { eq: "upgrades/besu.png" }) {
-      ...ClientLogos
-    }
-    erigon: file(relativePath: { eq: "upgrades/erigon.png" }) {
-      ...ClientLogos
-    }
-    geth: file(relativePath: { eq: "upgrades/geth.png" }) {
-      ...ClientLogos
-    }
-    nethermind: file(relativePath: { eq: "upgrades/nethermind.png" }) {
-      ...ClientLogos
-    }
-    lighthouse: file(relativePath: { eq: "upgrades/lighthouse.png" }) {
-      ...ClientLogos
-    }
-    tekuDark: file(relativePath: { eq: "upgrades/teku-dark.png" }) {
-      ...ClientLogos
-    }
-    tekuLight: file(relativePath: { eq: "upgrades/teku-light.png" }) {
-      ...ClientLogos
-    }
-    lighthouseLight: file(
-      relativePath: { eq: "upgrades/lighthouse-light.png" }
-    ) {
-      ...ClientLogos
-    }
-    lighthouseDark: file(relativePath: { eq: "upgrades/lighthouse-dark.png" }) {
-      ...ClientLogos
-    }
-    prysmSmall: file(relativePath: { eq: "upgrades/prysm.png" }) {
-      ...ClientLogosSmall
-    }
-    lodestarSmall: file(relativePath: { eq: "upgrades/lodestar.png" }) {
-      ...ClientLogosSmall
-    }
-    besuSmall: file(relativePath: { eq: "upgrades/besu.png" }) {
-      ...ClientLogosSmall
-    }
-    erigonSmall: file(relativePath: { eq: "upgrades/erigon.png" }) {
-      ...ClientLogosSmall
-    }
-    gethSmall: file(relativePath: { eq: "upgrades/geth.png" }) {
-      ...ClientLogosSmall
-    }
-    nethermindSmall: file(relativePath: { eq: "upgrades/nethermind.png" }) {
-      ...ClientLogosSmall
-    }
-    lighthouseSmallLight: file(
-      relativePath: { eq: "upgrades/lighthouse-light.png" }
-    ) {
-      ...ClientLogosSmall
-    }
-    lighthouseSmallDark: file(
-      relativePath: { eq: "upgrades/lighthouse-dark.png" }
-    ) {
-      ...ClientLogosSmall
-    }
-    tekuSmallDark: file(relativePath: { eq: "upgrades/teku-dark.png" }) {
-      ...ClientLogosSmall
-    }
-    tekuSmallLight: file(relativePath: { eq: "upgrades/teku-light.png" }) {
-      ...ClientLogosSmall
-    }
-    nimbus: file(relativePath: { eq: "upgrades/nimbus-cloud.png" }) {
-      ...ClientLogos
-    }
-    nimbusSmall: file(relativePath: { eq: "upgrades/nimbus-cloud.png" }) {
-      ...ClientLogosSmall
-    }
-  }
-`

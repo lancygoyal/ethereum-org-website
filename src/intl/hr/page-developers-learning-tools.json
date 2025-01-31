@@ -2,7 +2,6 @@
   "page-learning-tools-bootcamps": "Kampovi za napredovanje programera",
   "page-learning-tools-bootcamps-desc": "Plaćeni internetski tečajevi koji će vam pomoći.",
   "page-learning-tools-browse-docs": "Pregledavajte dokumente",
-  "page-learning-tools-chainshot-logo-alt": "ChainShot logo",
   "page-learning-tools-coding": "Učite kodirajući",
   "page-learning-tools-coding-subtitle": "Ovi alati pomoći će vam da eksperimentirate s Ethereumom ako više volite interaktivno iskustvo učenja.",
   "page-learning-tools-consensys-academy-description": "Mrežni kampovi za Ethereum programere.",
@@ -26,5 +25,6 @@
   "page-learning-tools-sandbox-desc": "Ti će vam pješčanici pružiti prostor za eksperimentiranje s pisanjem pametnih ugovora i razumijevanjem Ethereuma.",
   "page-learning-tools-studio-description": "Internetski IDE na kojem možete slijediti upute za stvaranje i testiranje pametnih ugovora te za njih izraditi sučelje.",
   "page-learning-tools-vyperfun-description": "Naučite Vyper gradeći vlastitu igru Pokémon.",
-  "page-learning-tools-vyperfun-logo-alt": "Vyper.fun logo"
+  "page-learning-tools-vyperfun-logo-alt": "Vyper.fun logo",
+  "alt-eth-blocks": "Ilustracija blokova posloženih kao simbol ETH-a"
 }

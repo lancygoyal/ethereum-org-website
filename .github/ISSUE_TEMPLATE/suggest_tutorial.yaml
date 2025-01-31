@@ -1,7 +1,7 @@
 name: Suggest a tutorial
 description: Suggest a tutorial to our developers platform
 title: Suggest a tutorial
-labels: ["feature :sparkles:", "content :fountain_pen:"]
+labels: ["feature ✨", "content 🖋️"]
 body:
   - type: markdown
     attributes:
@@ -62,3 +62,14 @@ body:
     attributes:
       label: "For tutorials hosted elsewhere: URL to tutorial"
       description: Please paste the URL to your tutorial
+  - type: checkboxes
+    id: tutorial_work_on
+    attributes:
+      label: Would you like to work on this issue?
+      options:
+        - label: "Yes"
+          required: false
+        - label: "No"
+          required: false
+    validations:
+      required: true

@@ -1,198 +1,195 @@
-import React, { useState, useEffect } from "react"
-import styled from "@emotion/styled"
-import { graphql, PageProps } from "gatsby"
+import { useEffect, useState } from "react"
 import makeBlockie from "ethereum-blockies-base64"
-import { useIntl } from "react-intl"
+import { type GetStaticProps } from "next"
+import { useRouter } from "next/router"
+import { useTranslation } from "next-i18next"
+import { serverSideTranslations } from "next-i18next/serverSideTranslations"
 
-import Breadcrumbs from "../../components/Breadcrumbs"
-import ButtonLink from "../../components/ButtonLink"
-import CardList from "../../components/CardList"
-import Checkbox from "../../components/Checkbox"
-import CopyToClipboard from "../../components/CopyToClipboard"
-import Emoji from "../../components/OldEmoji"
-import InfoBanner from "../../components/InfoBanner"
-import Link from "../../components/Link"
-import PageMetadata from "../../components/PageMetadata"
-import Translation from "../../components/Translation"
-import Tooltip from "../../components/Tooltip"
+import type {
+  BasePageProps,
+  ChildOnlyProp,
+  Lang,
+  TranslationKey,
+} from "@/lib/types"
 
+import Breadcrumbs from "@/components/Breadcrumbs"
+import CardList from "@/components/CardList"
+import CopyToClipboard from "@/components/CopyToClipboard"
+import Emoji from "@/components/Emoji"
+import FeedbackCard from "@/components/FeedbackCard"
+import Heading from "@/components/Heading"
+import { TwImage } from "@/components/Image"
+import InfoBanner from "@/components/InfoBanner"
+import MainArticle from "@/components/MainArticle"
+import PageMetadata from "@/components/PageMetadata"
+import Tooltip from "@/components/Tooltip"
+import Translation from "@/components/Translation"
 import {
-  ButtonSecondary,
-  FakeLink,
-} from "../../components/SharedStyledComponents"
-import { DEPOSIT_CONTRACT_ADDRESS } from "../../data/addresses"
-import { translateMessageId, TranslationKey } from "../../utils/translations"
-import type { Context } from "../../types"
-import FeedbackCard from "../../components/FeedbackCard"
-import { getImage } from "../../utils/image"
+  Button,
+  ButtonLink,
+  type ButtonLinkProps,
+  type ButtonProps,
+} from "@/components/ui/buttons/Button"
+import { Flex } from "@/components/ui/flex"
+import InlineLink from "@/components/ui/Link"
 
-const Page = styled.div`
-  width: 100%;
-`
+import { existsNamespace } from "@/lib/utils/existsNamespace"
+import { getLastDeployDate } from "@/lib/utils/getLastDeployDate"
+import { getLocaleTimestamp } from "@/lib/utils/time"
+import { getRequiredNamespacesForPage } from "@/lib/utils/translations"
 
-const Flex = styled.div`
-  display: flex;
-  border-bottom: 1px solid ${(props) => props.theme.colors.border};
-  @media (max-width: ${(props) => props.theme.breakpoints.l}) {
-    flex-direction: column;
-  }
-`
+import { DEPOSIT_CONTRACT_ADDRESS } from "@/data/addresses"
 
-const LeftColumn = styled.div`
-  flex: 1 1 50%;
-  padding: 2rem;
-  padding-top: 5rem;
-`
+import Checkbox from "../../../tailwind/ui/Checkbox"
 
-const RightColumn = styled(LeftColumn)`
-  flex: 1 1 50%;
-  padding-top: 8.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+import consensys from "@/public/images/projects/consensys.png"
+import etherscan from "@/public/images/projects/etherscan-logo-circle.png"
+import ef from "@/public/images/staking/ef-blog-logo.png"
 
-  @media (max-width: ${(props) => props.theme.breakpoints.l}) {
-    padding-top: 1rem;
-  }
-`
+const FlexBox = (props: ChildOnlyProp) => (
+  <Flex className="flex-col border-b lg:flex-row" {...props} />
+)
 
-const Title = styled.h1`
-  font-weight: normal;
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 140%;
-  color: ${(props) => props.theme.colors.text};
-`
+const LeftColumn = (props: ChildOnlyProp) => (
+  <div className="flex-shrink flex-grow basis-1/2 p-8 pt-20" {...props} />
+)
 
-const Subtitle = styled.div`
-  font-size: 1.25rem;
-  line-height: 140%;
-  color: ${(props) => props.theme.colors.text200};
-  margin-bottom: 3.5rem;
-`
+const RightColumn = (props: ChildOnlyProp) => (
+  <Flex
+    className="flex-shrink flex-grow basis-1/2 flex-col items-center p-8 pt-4 lg:pt-36"
+    {...props}
+  />
+)
 
-const ButtonRow = styled.div`
-  display: flex;
-  align-items: center;
-  @media (max-width: ${(props) => props.theme.breakpoints.m}) {
-    flex-direction: column-reverse;
-    align-items: flex-start;
-    justify-content: flex-start;
-  }
-`
+const Title = (props: ChildOnlyProp) => (
+  <h1 className="py-8 leading-xs" {...props} />
+)
 
-const StyledButton = styled(ButtonLink)`
-  margin-top: 0rem;
-  margin-bottom: 3rem;
-`
+const Subtitle = (props: ChildOnlyProp) => (
+  <p className="mb-14 leading-xs text-body-medium" {...props} />
+)
 
-const CardTag = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
-  background: ${(props) => props.theme.colors.primary};
-  border-bottom: 1px solid ${(props) => props.theme.colors.border};
-  color: ${(props) => props.theme.colors.buttonColor};
-  border-radius: 3px 3px 0px 0px;
-  text-transform: uppercase;
-  font-size: 0.875rem;
-`
+const ButtonRow = (props: ChildOnlyProp) => (
+  <Flex
+    className="flex-col-reverse items-start justify-start md:flex-row md:items-center"
+    {...props}
+  />
+)
 
-const AddressCard = styled.div`
-  background: ${(props) => props.theme.colors.background};
-  border: 1px solid ${(props) => props.theme.colors.border};
-  border-radius: 4px;
-  box-shadow: ${(props) => props.theme.colors.tableBoxShadow};
-  margin-bottom: 2rem;
-  max-width: 560px;
+const H2 = (props: ChildOnlyProp) => (
+  <h2 className="mb-8 mt-12 leading-xs" {...props} />
+)
 
-  @media (max-width: ${(props) => props.theme.breakpoints.l}) {
-    max-width: 100%;
-  }
-  @media (min-width: ${(props) => props.theme.breakpoints.l}) {
-    position: sticky;
-    top: 7.25rem; /* account for navbar */
-  }
-`
+const StyledButton = ({
+  href,
+  children,
+}: Pick<ButtonLinkProps, "href" | "children">) => (
+  <ButtonLink className="mb-12 mt-0" href={href}>
+    {children}
+  </ButtonLink>
+)
 
-const Address = styled.div`
-  font-family: ${(props) => props.theme.fonts.monospace};
-  border-radius: 2px;
-  font-size: 2rem;
-  flex-wrap: wrap;
-  text-transform: uppercase;
-  line-height: 140%;
-  margin-bottom: 1rem;
-`
+const CardTag = (props: ChildOnlyProp) => (
+  <Flex
+    className="items-center justify-center rounded-t-sm border-b-white bg-primary p-2 text-sm uppercase text-white dark:text-background-medium"
+    {...props}
+  />
+)
 
-const CopyButton = styled(ButtonSecondary)`
-  margin-right: 1.5rem;
-  margin-bottom: 1rem;
-  @media (max-width: ${(props) => props.theme.breakpoints.m}) {
-    margin-right: 0rem;
-    margin-top: 1rem;
-  }
-`
+const AddressCard = (props: ChildOnlyProp) => {
+  return (
+    <div
+      className="mb-8 max-w-full rounded-sm border border-border shadow-table lg:sticky lg:top-28 lg:max-w-[560px]"
+      {...props}
+    />
+  )
+}
 
-const CardContainer = styled.div`
-  margin: 2rem;
-`
+const Address = (props: ChildOnlyProp) => (
+  <div
+    className="mb-4 flex-wrap rounded-sm font-monospace text-[2rem] uppercase leading-xs"
+    {...props}
+  />
+)
 
-const Row = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-  @media (max-width: ${(props) => props.theme.breakpoints.m}) {
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    text-align: left;
-  }
-`
+const CopyButton = (props: ButtonProps) => (
+  <Button
+    className="mb-4 me-0 mt-4 md:me-6 md:mt-0"
+    variant="outline"
+    {...props}
+  />
+)
 
-const TitleText = styled.div``
+const Row = (props: ChildOnlyProp) => (
+  <Flex
+    className="mb-4 flex-col items-start justify-start text-left md:flex-row md:justify-between"
+    {...props}
+  />
+)
 
-const CardTitle = styled.h2`
-  margin-top: 0rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-`
+const CardTitle = (props: ChildOnlyProp) => (
+  <Heading
+    as="h2"
+    mb={4}
+    fontWeight="600"
+    fontSize="2rem"
+    lineHeight={1.4}
+    {...props}
+  />
+)
 
-const Caption = styled.div`
-  color: ${(props) => props.theme.colors.text200};
-  font-weight: 400;
-  font-size: 0.875rem;
-  @media (max-width: ${(props) => props.theme.breakpoints.m}) {
-    margin-bottom: 2rem;
-  }
-`
+const Caption = (props: ChildOnlyProp) => (
+  <p className="mb-8 text-body-medium md:mb-8 lg:mb-0" {...props} />
+)
 
-const Blockie = styled.img`
-  border-radius: 4px;
-  height: 4rem;
-  width: 4rem;
-`
+const Blockie = (props: { src: string }) => (
+  <TwImage
+    className="rounded-sm"
+    src={props.src}
+    alt={""}
+    height={64}
+    width={64}
+  />
+)
 
-const TextToSpeech = styled.div`
-  display: flex;
-  margin-bottom: 2rem;
-`
-
-const StyledFakeLink = styled(FakeLink)`
-  margin-right: 0.5rem;
-`
+const StyledFakeLink = (props: ButtonProps) => (
+  <Button
+    className="me-2 cursor-pointer px-0 text-primary"
+    variant="ghost"
+    {...props}
+  />
+)
 
 const CHUNKED_ADDRESS = DEPOSIT_CONTRACT_ADDRESS.match(/.{1,3}/g)?.join(" ")
 
 const blockieSrc = makeBlockie(DEPOSIT_CONTRACT_ADDRESS)
 
-const DepositContractPage = ({
-  data,
-  location,
-}: PageProps<Queries.DepositContractPageQuery, Context>) => {
-  const intl = useIntl()
+export const getStaticProps = (async ({ locale }) => {
+  const requiredNamespaces = getRequiredNamespacesForPage(
+    "/staking/deposit-contract"
+  )
+
+  const contentNotTranslated = !existsNamespace(locale!, requiredNamespaces[2])
+
+  const lastDeployDate = getLastDeployDate()
+  const lastDeployLocaleTimestamp = getLocaleTimestamp(
+    locale as Lang,
+    lastDeployDate
+  )
+
+  return {
+    props: {
+      ...(await serverSideTranslations(locale!, requiredNamespaces)),
+      contentNotTranslated,
+      lastDeployLocaleTimestamp,
+    },
+  }
+}) satisfies GetStaticProps<BasePageProps>
+
+const DepositContractPage = () => {
+  const { asPath } = useRouter()
+
+  const { t } = useTranslation("page-staking-deposit-contract")
 
   const [state, setState] = useState<{
     browserHasTextToSpeechSupport: boolean
@@ -214,11 +211,9 @@ const DepositContractPage = ({
 
   useEffect(() => {
     const browserHasTextToSpeechSupport = !!window.speechSynthesis
-    if (!browserHasTextToSpeechSupport) {
-      return
-    }
+    if (!browserHasTextToSpeechSupport) return
     // Create textToSpeechRequest
-    let speech = new SpeechSynthesisUtterance()
+    const speech = new SpeechSynthesisUtterance()
     speech.lang = "en-US"
     speech.text = DEPOSIT_CONTRACT_ADDRESS.split("").join(",")
     speech.volume = 1
@@ -273,25 +268,19 @@ const DepositContractPage = ({
     {
       title: "ConsenSys",
       link: "https://consensys.net/blog/news/eth2-phase-0-deposit-contract-address/",
-      image: getImage(data.consensys)!,
+      image: consensys,
       alt: "",
     },
     {
       title: "Ethereum Foundation",
       link: "https://blog.ethereum.org/2020/11/04/eth2-quick-update-no-19/",
-      image: getImage(data.ef)!,
+      image: ef,
       alt: "",
     },
     {
       title: "Etherscan",
       link: `https://etherscan.io/address/${DEPOSIT_CONTRACT_ADDRESS}`,
-      image: getImage(data.etherscan)!,
-      alt: "",
-    },
-    {
-      title: "EthHub",
-      link: "https://docs.ethhub.io/ethereum-roadmap/ethereum-2.0/deposit-contract/",
-      image: getImage(data.ethhub)!,
+      image: etherscan,
       alt: "",
     },
   ]
@@ -302,155 +291,127 @@ const DepositContractPage = ({
     state.userWillCheckOtherSources
 
   const textToSpeechText = state.isSpeechActive
-    ? translateMessageId("page-staking-deposit-contract-stop-reading", intl)
-    : translateMessageId("page-staking-deposit-contract-read-aloud", intl)
+    ? t("page-staking-deposit-contract-stop-reading")
+    : t("page-staking-deposit-contract-read-aloud")
   const textToSpeechEmoji = state.isSpeechActive
     ? ":speaker_high_volume:"
     : ":speaker:"
   return (
-    <Page>
-      <Flex>
+    <MainArticle className="w-full">
+      <FlexBox>
         <PageMetadata
-          title={translateMessageId(
-            "page-staking-deposit-contract-meta-title",
-            intl
-          )}
-          description={translateMessageId(
-            "page-staking-deposit-contract-meta-desc",
-            intl
-          )}
+          title={t("page-staking-deposit-contract-meta-title")}
+          description={t("page-staking-deposit-contract-meta-desc")}
         />
         <LeftColumn>
-          <Breadcrumbs slug={location.pathname} startDepth={1} />
-          <Title>
-            <Translation id="page-staking-deposit-contract-title" />
-          </Title>
-          <Subtitle>
-            <Translation id="page-staking-deposit-contract-subtitle" />
-          </Subtitle>
-          <h2>
-            <Translation id="page-staking-deposit-contract-h2" />
-          </h2>
-          <p>
-            <Translation id="page-staking-deposit-contract-staking" />{" "}
-            <Link to="/staking/">
-              <Translation id="page-staking-deposit-contract-staking-more-link" />
-            </Link>
+          <Breadcrumbs slug={asPath} startDepth={1} />
+          <Title>{t("page-staking-deposit-contract-title")}</Title>
+          <Subtitle>{t("page-staking-deposit-contract-subtitle")}</Subtitle>
+          <H2>{t("page-staking-deposit-contract-h2")}</H2>
+          <p className="mb-6">
+            {t("page-staking-deposit-contract-staking")}{" "}
+            <InlineLink href="/staking/">
+              {t("page-staking-deposit-contract-staking-more-link")}
+            </InlineLink>
           </p>
-          <StyledButton to="https://launchpad.ethereum.org">
-            <Translation id="page-staking-deposit-contract-launchpad" />
+          <StyledButton href="https://launchpad.ethereum.org">
+            {t("page-staking-deposit-contract-launchpad")}
           </StyledButton>
-          <h2>
-            <Translation id="page-staking-deposit-contract-staking-check" />
-          </h2>
-          <p>
-            <Translation id="page-staking-deposit-contract-staking-check-desc" />
+          <H2>{t("page-staking-deposit-contract-staking-check")}</H2>
+          <p className="mb-6">
+            {t("page-staking-deposit-contract-staking-check-desc")}
           </p>
-          <CardList content={addressSources} />
+          <CardList items={addressSources} />
         </LeftColumn>
         <RightColumn>
           <AddressCard>
             <CardTag>
-              <Translation id="page-staking-deposit-contract-address-check-btn" />
+              {t("page-staking-deposit-contract-address-check-btn")}
             </CardTag>
-            <CardContainer>
+            <div className="m-8">
               {!state.showAddress && (
                 <>
                   <Row>
                     <CardTitle>
-                      <Translation id="page-staking-deposit-contract-confirm-address" />
+                      {t("page-staking-deposit-contract-confirm-address")}
                     </CardTitle>
                   </Row>
-                  <Checkbox
-                    isChecked={state.userHasUsedLaunchpad}
-                    size="md"
-                    mb="0.5rem"
-                    display="flex"
-                    alignItems="top"
-                    variant="alignTop"
-                    minHeight="3.5rem"
-                    onChange={() =>
-                      setState({
-                        ...state,
-                        userHasUsedLaunchpad: !state.userHasUsedLaunchpad,
-                      })
-                    }
-                  >
-                    <Translation id="page-staking-deposit-contract-checkbox1" />
-                  </Checkbox>
-                  <Checkbox
-                    isChecked={state.userUnderstandsStaking}
-                    size="md"
-                    mb="0.5rem"
-                    display="flex"
-                    alignItems="top"
-                    variant="alignTop"
-                    minHeight="3.5rem"
-                    onChange={() =>
-                      setState({
-                        ...state,
-                        userUnderstandsStaking: !state.userUnderstandsStaking,
-                      })
-                    }
-                  >
-                    <Translation id="page-staking-deposit-contract-checkbox2" />
-                  </Checkbox>
-                  <Checkbox
-                    isChecked={state.userWillCheckOtherSources}
-                    size="md"
-                    mb="0.5rem"
-                    display="flex"
-                    alignItems="top"
-                    variant="alignTop"
-                    minHeight="3.5rem"
-                    onChange={() =>
-                      setState({
-                        ...state,
-                        userWillCheckOtherSources:
-                          !state.userWillCheckOtherSources,
-                      })
-                    }
-                  >
-                    <Translation id="page-staking-deposit-contract-checkbox3" />
-                  </Checkbox>
+                  <Flex className="flex-col">
+                    <label className="mb-2 flex items-center gap-2">
+                      <Checkbox
+                        className="flex-none"
+                        checked={state.userHasUsedLaunchpad}
+                        onCheckedChange={() =>
+                          setState({
+                            ...state,
+                            userHasUsedLaunchpad: !state.userHasUsedLaunchpad,
+                          })
+                        }
+                      />
+                      {t("page-staking-deposit-contract-checkbox1")}
+                    </label>
+                    <label className="mb-2 flex items-center gap-2">
+                      <Checkbox
+                        className="flex-none"
+                        checked={state.userUnderstandsStaking}
+                        onCheckedChange={() =>
+                          setState({
+                            ...state,
+                            userUnderstandsStaking:
+                              !state.userUnderstandsStaking,
+                          })
+                        }
+                      />
+                      {t("page-staking-deposit-contract-checkbox2")}
+                    </label>
+                    <label className="mb-2 flex items-center gap-2">
+                      <Checkbox
+                        className="flex-none"
+                        checked={state.userWillCheckOtherSources}
+                        onCheckedChange={() =>
+                          setState({
+                            ...state,
+                            userWillCheckOtherSources:
+                              !state.userWillCheckOtherSources,
+                          })
+                        }
+                      />
+                      {t("page-staking-deposit-contract-checkbox3")}
+                    </label>
+                  </Flex>
                   <CopyButton
                     disabled={!isButtonEnabled}
                     onClick={() =>
                       setState({ ...state, showAddress: !state.showAddress })
                     }
                   >
-                    <Emoji text=":eyes:" size={1} />{" "}
-                    <Translation id="page-staking-deposit-contract-reveal-address-btn" />
+                    <Emoji text=":eyes:" className="text-md" />
+                    {t("page-staking-deposit-contract-reveal-address-btn")}
                   </CopyButton>
                 </>
               )}
               {state.showAddress && (
                 <>
                   <Row>
-                    <TitleText>
+                    <div>
                       <CardTitle>
-                        <Translation id="page-staking-deposit-contract-address" />
+                        {t("page-staking-deposit-contract-address")}
                       </CardTitle>
                       <Caption>
-                        <Translation id="page-staking-deposit-contract-address-caption" />
+                        {t("page-staking-deposit-contract-address-caption")}
                       </Caption>
-                    </TitleText>
+                    </div>
                     <Blockie src={blockieSrc} />
                   </Row>
                   {state.browserHasTextToSpeechSupport && (
-                    <TextToSpeech>
+                    <Flex className="mb-8 items-center">
                       <StyledFakeLink onClick={handleTextToSpeech}>
                         <Translation id={textToSpeechText as TranslationKey} />
                       </StyledFakeLink>{" "}
-                      <Emoji text={textToSpeechEmoji} size={1} />
-                    </TextToSpeech>
+                      <Emoji text={textToSpeechEmoji} className="text-md" />
+                    </Flex>
                   )}
-                  <Tooltip
-                    content={translateMessageId(
-                      "page-staking-deposit-contract-warning",
-                      intl
-                    )}
-                  >
+                  <Tooltip content={t("page-staking-deposit-contract-warning")}>
                     <Address>{CHUNKED_ADDRESS}</Address>
                   </Tooltip>
                   <ButtonRow>
@@ -458,74 +419,48 @@ const DepositContractPage = ({
                       {(isCopied) => (
                         <CopyButton>
                           {!isCopied ? (
-                            <div>
-                              <Emoji text=":clipboard:" size={1} />{" "}
-                              <Translation id="page-staking-deposit-contract-copy" />
-                            </div>
+                            <>
+                              <Emoji text=":clipboard:" className="text-md" />
+                              {t("page-staking-deposit-contract-copy")}
+                            </>
                           ) : (
-                            <div>
-                              <Emoji text=":white_check_mark:" size={1} />{" "}
-                              <Translation id="page-staking-deposit-contract-copied" />
-                            </div>
+                            <>
+                              <Emoji
+                                text=":white_check_mark:"
+                                className="text-md"
+                              />
+                              {t("page-staking-deposit-contract-copied")}
+                            </>
                           )}
                         </CopyButton>
                       )}
                     </CopyToClipboard>
-                    <Link
-                      to={`https://etherscan.io/address/${DEPOSIT_CONTRACT_ADDRESS}`}
+                    <InlineLink
+                      href={`https://etherscan.io/address/${DEPOSIT_CONTRACT_ADDRESS}`}
                     >
-                      <Translation id="page-staking-deposit-contract-etherscan" />
-                    </Link>
+                      {t("page-staking-deposit-contract-etherscan")}
+                    </InlineLink>
                   </ButtonRow>
                 </>
               )}
-              <InfoBanner isWarning={true} emoji=":warning:">
+              <InfoBanner isWarning emoji=":warning:">
                 <div>
-                  <Translation id="page-staking-deposit-contract-warning-2" />{" "}
-                  <Link to="https://launchpad.ethereum.org">
-                    <Translation id="page-staking-deposit-contract-launchpad-2" />
-                  </Link>
+                  {t("page-staking-deposit-contract-warning-2")}{" "}
+                  <InlineLink
+                    className="text-primary"
+                    href="https://launchpad.ethereum.org"
+                  >
+                    {t("page-staking-deposit-contract-launchpad-2")}
+                  </InlineLink>
                 </div>
               </InfoBanner>
-            </CardContainer>
+            </div>
           </AddressCard>
         </RightColumn>
-      </Flex>
+      </FlexBox>
       <FeedbackCard />
-    </Page>
+    </MainArticle>
   )
 }
 
 export default DepositContractPage
-
-export const sourceImage = graphql`
-  fragment sourceImage on File {
-    childImageSharp {
-      gatsbyImageData(
-        height: 20
-        layout: FIXED
-        placeholder: BLURRED
-        quality: 100
-      )
-    }
-  }
-`
-
-export const query = graphql`
-  query DepositContractPage {
-    consensys: file(relativePath: { eq: "projects/consensys.png" }) {
-      ...sourceImage
-    }
-    ef: file(relativePath: { eq: "staking/ef-blog-logo.png" }) {
-      ...sourceImage
-    }
-    ethhub: file(relativePath: { eq: "projects/ethhub.png" }) {
-      ...sourceImage
-    }
-    etherscan: file(
-      relativePath: { eq: "projects/etherscan-logo-circle.png" }
-    ) {
-      ...sourceImage
-    }
-  }
-`

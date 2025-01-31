@@ -1,106 +1,85 @@
-import React from "react"
-import { useIntl } from "react-intl"
-import CardList, { CardListItem } from "./CardList"
+import { useTranslation } from "next-i18next"
 
-import { Box } from "@chakra-ui/react"
-import { translateMessageId } from "../utils/translations"
+import CardList, { type CardProps } from "@/components/CardList"
 
-export interface IProps {}
+const MergeArticleList = () => {
+  const { t } = useTranslation(["page-upgrades", "page-upgrades-index"])
 
-const MergeArticleList: React.FC<IProps> = () => {
-  const intl = useIntl()
-  const reads: Array<CardListItem> = [
+  const reads: CardProps[] = [
     {
-      title: translateMessageId("page-upgrade-article-title-ethmerge", intl),
-      description: translateMessageId(
-        "page-upgrade-article-author-ethmerge",
-        intl
+      title: t("page-upgrades-index:page-upgrade-article-title-ethmerge"),
+      description: t(
+        "page-upgrades-index:page-upgrade-article-author-ethmerge"
       ),
       link: "https://ethmerge.com/",
     },
     {
-      title: translateMessageId(
-        "page-upgrade-article-title-merge-is-coming",
-        intl
+      title: t(
+        "page-upgrades-index:page-upgrade-article-title-merge-is-coming"
       ),
-      description: translateMessageId(
-        "page-upgrade-article-author-alchemy",
-        intl
-      ),
+      description: t("page-upgrades-index:page-upgrade-article-author-alchemy"),
       link: "https://www.alchemy.com/the-merge",
     },
     {
-      title: translateMessageId(
-        "page-upgrade-article-title-state-of-the-merge",
-        intl
+      title: t(
+        "page-upgrades-index:page-upgrade-article-title-state-of-the-merge"
       ),
-      description: translateMessageId(
-        "page-upgrade-article-author-consensys",
-        intl
+      description: t(
+        "page-upgrades-index:page-upgrade-article-author-consensys"
       ),
       link: "https://consensys.net/blog/news/the-state-of-the-merge-an-update-on-ethereums-merge-to-proof-of-stake-in-2022/",
     },
     {
-      title: translateMessageId(
-        "page-upgrade-article-title-ropsten-merge-testnet",
-        intl
+      title: t(
+        "page-upgrades-index:page-upgrade-article-title-ropsten-merge-testnet"
       ),
-      description: translateMessageId(
-        "page-upgrade-article-author-ethereum-foundation",
-        intl
+      description: t(
+        "page-upgrades-index:page-upgrade-article-author-ethereum-foundation"
       ),
       link: "https://blog.ethereum.org/2022/05/30/ropsten-merge-announcement/",
     },
     {
-      title: translateMessageId(
-        "page-upgrade-article-title-execution-layer-specs",
-        intl
+      title: t(
+        "page-upgrades-index:page-upgrade-article-title-execution-layer-specs"
       ),
-      description: translateMessageId(
-        "page-upgrade-article-author-ethereum-foundation",
-        intl
+      description: t(
+        "page-upgrades-index:page-upgrade-article-author-ethereum-foundation"
       ),
       link: "https://github.com/ethereum/execution-specs/",
     },
     {
-      title: translateMessageId(
-        "page-upgrade-article-title-consensus-layer-specs",
-        intl
+      title: t(
+        "page-upgrades-index:page-upgrade-article-title-consensus-layer-specs"
       ),
-      description: translateMessageId(
-        "page-upgrade-article-author-ethereum-foundation",
-        intl
+      description: t(
+        "page-upgrades-index:page-upgrade-article-author-ethereum-foundation"
       ),
       link: "https://github.com/ethereum/consensus-specs/tree/dev/specs/bellatrix",
     },
     {
-      title: translateMessageId(
-        "page-upgrade-article-title-engine-api-specs",
-        intl
+      title: t(
+        "page-upgrades-index:page-upgrade-article-title-engine-api-specs"
       ),
-      description: translateMessageId(
-        "page-upgrade-article-author-ethereum-foundation",
-        intl
+      description: t(
+        "page-upgrades-index:page-upgrade-article-author-ethereum-foundation"
       ),
       link: "https://github.com/ethereum/execution-apis/tree/main/src/engine",
     },
     {
-      title: translateMessageId(
-        "page-upgrade-article-title-hitchhikers-guide-to-ethereum",
-        intl
+      title: t(
+        "page-upgrades-index:page-upgrade-article-title-hitchhikers-guide-to-ethereum"
       ),
-      description: translateMessageId(
-        "page-upgrade-article-author-delphi-digital",
-        intl
+      description: t(
+        "page-upgrades-index:page-upgrade-article-author-delphi-digital"
       ),
       link: "https://members.delphidigital.io/reports/the-hitchhikers-guide-to-ethereum",
     },
   ]
 
   return (
-    <Box mb="4rem">
-      <CardList content={reads} />
-    </Box>
+    <div className="mb-16">
+      <CardList items={reads} />
+    </div>
   )
 }
 

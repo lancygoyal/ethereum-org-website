@@ -1,8 +1,6 @@
 {
   "page-local-environment-brownie-desc": "Okvir za razvoj i testiranje zasnovan na Pythonu za pametne ugovore usmjerene na Ethereumovu virtualnu mašinu.",
   "page-local-environment-brownie-logo-alt": "Brownie logo",
-  "page-local-environment-embark-desc": "Razvojna platforma sve u jednom, za izgradnju i primjenu decentraliziranih aplikacija.",
-  "page-local-environment-embark-logo-alt": "Embark logo",
   "page-local-environment-epirus-desc": "Platforma za razvoj, plasiranje i nadgledanje aplikacija lanaca blokova na Javinoj virtualnoj mašini",
   "page-local-environment-epirus-logo-alt": "Epirus logo",
   "page-local-environment-eth-app-desc": "Izradite aplikacije na osnovi Ethereuma jednom naredbom. Isporučuje se s širokom ponudom okvira UI i predložaka DeFi koje možete odabrati.",
@@ -28,8 +26,6 @@
   "page-local-environment-setup-title": "Postavite svoje lokalno razvojno okruženje",
   "page-local-environment-solidity-template-desc": "Predložak GitHub sa unaprijed zadanim postavkama za vaše pametne ugovore Solidity. Uključuje lokalnu mrežu Hardhat, Waffle za testove, Ethere za implementaciju novčanika i još mnogo toga.",
   "page-local-environment-solidity-template-logo-alt": "Solidity template logo",
-  "page-local-environment-truffle-desc": "Komplet Truffle vodi programere od ideje do dapp-a što je udobnije moguće.",
-  "page-local-environment-truffle-logo-alt": "Truffle logo",
   "page-local-environment-waffle-desc": "Najnaprednija knjižnica za testiranje pametnih ugovora. Upotrebljavajte samostalno ili sa Scaffold-ethom ili s Hardhatom.",
   "page-local-environment-waffle-logo-alt": "Waffle logo"
 }

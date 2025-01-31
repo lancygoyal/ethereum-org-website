@@ -1,302 +1,125 @@
-import { useStaticQuery, graphql } from "gatsby"
-import { getImage } from "gatsby-plugin-image"
-import { useIntl } from "react-intl"
-import { CardListItem } from "../CardList"
-import { translateMessageId } from "../../utils/translations"
+import { useTranslation } from "next-i18next"
+
+import { type CardProps } from "@/components/CardList"
+
+import aaveImg from "@/public/images/dapps/aave.png"
+// -- borrow
+import compoundImg from "@/public/images/dapps/compound.png"
+// -- earn
+import gitcoinImg from "@/public/images/dapps/gitcoin.png"
+import loopringImg from "@/public/images/dapps/loopring.png"
+import matchaImg from "@/public/images/dapps/matcha.png"
+import summerfiImg from "@/public/images/dapps/summerfi.png"
+// Static assets
+// -- dapps
+import uniImg from "@/public/images/dapps/uni.png"
+import oneInchImg from "@/public/images/exchanges/1inch.png"
+import binanceImg from "@/public/images/exchanges/binance.png"
+// -- exchanges
+import coinbaseImg from "@/public/images/exchanges/coinbase.png"
+import coinmamaImg from "@/public/images/exchanges/coinmama.png"
+import geminiImg from "@/public/images/exchanges/gemini.png"
+import krakenImg from "@/public/images/exchanges/kraken.png"
+import ethImg from "@/public/images/favicon.png"
 
 export const useStablecoinAccordion = () => {
-  const intl = useIntl()
-  const data = useStaticQuery(graphql`
-    {
-      uniswap: file(relativePath: { eq: "dapps/uni.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      compound: file(relativePath: { eq: "dapps/compound.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      aave: file(relativePath: { eq: "dapps/aave.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      oasis: file(relativePath: { eq: "dapps/stabledai.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      gitcoin: file(relativePath: { eq: "dapps/gitcoin.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      maker: file(relativePath: { eq: "stablecoins/maker.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      eth: file(relativePath: { eq: "favicon.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      oneinch: file(relativePath: { eq: "exchanges/1inch.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      loopring: file(relativePath: { eq: "dapps/loopring.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      matcha: file(relativePath: { eq: "dapps/matcha.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      coinbase: file(relativePath: { eq: "exchanges/coinbase.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      kraken: file(relativePath: { eq: "exchanges/kraken.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      coinmama: file(relativePath: { eq: "exchanges/coinmama.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      gemini: file(relativePath: { eq: "exchanges/gemini.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      binance: file(relativePath: { eq: "exchanges/binance.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-      bittrex: file(relativePath: { eq: "exchanges/bittrex.png" }) {
-        childImageSharp {
-          gatsbyImageData(
-            width: 24
-            layout: FIXED
-            placeholder: BLURRED
-            quality: 100
-          )
-        }
-      }
-    }
-  `)
+  const { t } = useTranslation("page-stablecoins")
 
-  const dapps: Array<CardListItem> = [
+  const dapps: Array<CardProps> = [
     {
       title: "Uniswap",
-      image: getImage(data.uniswap)!,
+      image: uniImg,
       link: "https://uniswap.org",
-      alt: translateMessageId("uniswap-logo", intl),
+      alt: t("uniswap-logo"),
     },
     {
       title: "Loopring",
-      image: getImage(data.loopring)!,
-      link: "https://loopring.org",
-      alt: translateMessageId("loopring-logo", intl),
+      image: loopringImg,
+      link: "https://loopring.io/#/pro",
+      alt: t("loopring-logo"),
     },
     {
       title: "1inch",
-      image: getImage(data.oneinch)!,
+      image: oneInchImg,
       link: "https://app.1inch.io",
-      alt: translateMessageId("1inch-logo", intl),
+      alt: t("1inch-logo"),
     },
     {
       title: "Matcha",
-      image: getImage(data.matcha)!,
+      image: matchaImg,
       link: "https://matcha.xyz",
-      alt: translateMessageId("matcha-logo", intl),
+      alt: t("matcha-logo"),
     },
   ]
 
-  const borrow: Array<CardListItem> = [
+  const borrow: Array<CardProps> = [
     {
       title: "Compound",
-      image: getImage(data.compound)!,
+      image: compoundImg,
       link: "https://compound.finance",
-      alt: translateMessageId("compound-logo", intl),
+      alt: t("compound-logo"),
     },
     {
       title: "Aave",
-      image: getImage(data.aave)!,
+      image: aaveImg,
       link: "https://aave.com",
-      alt: translateMessageId("aave-logo", intl),
+      alt: t("aave-logo"),
     },
     {
-      title: "Oasis",
-      image: getImage(data.oasis)!,
-      link: "https://oasis.app",
-      alt: translateMessageId("oasis-logo", intl),
+      title: "Summer.fi",
+      image: summerfiImg,
+      link: "https://summer.fi/",
+      alt: t("summerfi-logo"),
     },
   ]
 
-  const earn: Array<CardListItem> = [
+  const earn: Array<CardProps> = [
     {
-      title: translateMessageId(
-        "page-stablecoins-accordion-earn-project-bounties",
-        intl
-      ),
-      image: getImage(data.gitcoin)!,
+      title: t("page-stablecoins-accordion-earn-project-bounties"),
+      image: gitcoinImg,
       link: "https://gitcoin.co/explorer",
-      description: translateMessageId(
-        "page-stablecoins-accordion-earn-project-1-description",
-        intl
-      ),
-      alt: translateMessageId("gitcoin-logo", intl),
+      description: t("page-stablecoins-accordion-earn-project-1-description"),
+      alt: t("gitcoin-logo"),
     },
     {
-      title: translateMessageId(
-        "page-stablecoins-accordion-earn-project-community",
-        intl
-      ),
-      image: getImage(data.maker)!,
-      link: "https://makerdao.world/en/resources/",
-      description: translateMessageId(
-        "page-stablecoins-accordion-earn-project-2-description",
-        intl
-      ),
-      alt: translateMessageId("makerdao-logo", intl),
-    },
-    {
-      title: translateMessageId(
-        "page-stablecoins-accordion-earn-project-bug-bounties",
-        intl
-      ),
-      image: getImage(data.eth)!,
+      title: t("page-stablecoins-accordion-earn-project-bug-bounties"),
+      image: ethImg,
       link: "/bug-bounty/",
-      description: translateMessageId(
-        "page-stablecoins-accordion-earn-project-3-description",
-        intl
-      ),
-      alt: translateMessageId("ethereum-logo", intl),
+      description: t("page-stablecoins-accordion-earn-project-3-description"),
+      alt: t("ethereum-logo"),
     },
   ]
 
-  const exchanges: Array<CardListItem> = [
+  const exchanges: Array<CardProps> = [
     {
       title: "Coinbase",
-      image: getImage(data.coinbase)!,
+      image: coinbaseImg,
       link: "https://coinbase.com",
-      alt: translateMessageId("coinbase-logo", intl),
+      alt: t("coinbase-logo"),
     },
     {
       title: "Gemini",
-      image: getImage(data.gemini)!,
+      image: geminiImg,
       link: "https://gemini.com",
-      alt: translateMessageId("gemini-logo", intl),
+      alt: t("gemini-logo"),
     },
     {
       title: "Kraken",
-      image: getImage(data.kraken)!,
+      image: krakenImg,
       link: "https://kraken.com",
-      alt: translateMessageId("kraken-logo", intl),
+      alt: t("kraken-logo"),
     },
     {
       title: "Coinmama",
-      image: getImage(data.coinmama)!,
+      image: coinmamaImg,
       link: "https://coinmama.com",
-      alt: translateMessageId("coinmama-logo", intl),
-    },
-    {
-      title: "Bittrex",
-      image: getImage(data.bittrex)!,
-      link: "https://global.bittrex.com",
-      alt: translateMessageId("bittrex-logo", intl),
+      alt: t("coinmama-logo"),
     },
     {
       title: "Binance",
-      image: getImage(data.binance)!,
+      image: binanceImg,
       link: "https://binance.com",
-      alt: translateMessageId("binance-logo", intl),
+      alt: t("binance-logo"),
     },
   ]
 
